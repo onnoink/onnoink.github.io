@@ -1,471 +1,373 @@
 <!DOCTYPE html>
+<html lang="zh">
 <head>
-  <meta charset="utf-8">
-  
-  <title>
-    onno
-  </title>
-  <meta content="width=device-width, initial-scale=1" name="viewport">
-  <meta name="theme-color" content="#4184f3">
-  
-  
-  <link href="https://avatars.githubusercontent.com/u/8000921?v=4" rel="icon" />
-  
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
 
-  
-<link rel="stylesheet" href="/css/highlight.light.css">
-
-  
-<link rel="stylesheet" href="/css/prism-customize.css">
-
-  
-<link rel="stylesheet" href="/css/nav-icon.css">
-
-  
-<link rel="stylesheet" href="/css/waves.min.css">
-
-  
-<link rel="stylesheet" href="/css/jquery.tocify.css">
-
-  
 <link rel="stylesheet" href="/css/main.css">
 
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"onno.ink","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="onno 求索心路历程 ，路漫漫其修远兮，吾将上下而求索">
+<meta property="og:type" content="website">
+<meta property="og:title" content="onno">
+<meta property="og:url" content="https://onno.ink/index.html">
+<meta property="og:site_name" content="onno">
+<meta property="og:description" content="onno 求索心路历程 ，路漫漫其修远兮，吾将上下而求索">
+<meta property="og:locale">
+<meta property="article:author" content="onno">
+<meta property="article:tag" content="onno">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://onno.ink/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : true,
+    isPost : false,
+    lang   : 'zh'
+  };
+</script>
+
+  <title>onno</title>
   
-<link rel="stylesheet" href="/css/nav-indicator.css">
 
-  
-<link rel="stylesheet" href="/css/twikoo.css">
 
-  
-<link rel="stylesheet" href="/css/search.css">
 
-  
-  
 
-  
 
-  </meta>
-  </meta>
-  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
-  
-<script src="/js/comment.js"></script>
 
-  
-<script src="/js/copy.js"></script>
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
 
-<meta name="generator" content="Hexo 5.4.0"></head>
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
 
-	<body>
-		<header>
-			<!-- cover image or sth. -->
-		</header>
-		<div id="main" class="m-scene">
-			
-<div class="nav-wrapper" id="header">
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
 
-    <div class="container">
-        <nav>
-            
-            
-            <div class="logo wave">
-                <a href="/" id="logo">
-                    onno 求索心路历程
-                </a>
-            </div>
+</head>
 
-            
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
 
-            <div class="nav-toggle-icon" >
-                <div class="material-hamburger">
-                    <span>
-                    </span>
-                    <span>
-                    </span>
-                    <span>
-                    </span>
-                </div>
-            </div>
-
-            <div class="menu-wrapper">
-                <div class="nav-indicator">
-                </div>
-                <ul class="menus">
-                    
-                     
-                        <li>
-                            <a class="wave " href="/">
-                                首页
-                            </a>
-                        </li>
-                     
-                        <li>
-                            <a class="wave " href="/archives">
-                                归档
-                            </a>
-                        </li>
-                     
-                        <li>
-                            <a class="wave " href="/about">
-                                关于
-                            </a>
-                        </li>
-                     
-                        <li>
-                            <a class="wave " href="/message">
-                                留言
-                            </a>
-                        </li>
-                     
-                        <li>
-                            <a class="wave " href="/search">
-                                搜索
-                            </a>
-                        </li>
-                     
-                    
-                   
-                </ul>
-            </div>
-
-        </nav>
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
     </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">onno</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">onno 求索心路历程 </p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
 </div>
 
 
-				<div class="container content">
-					<div class="scene_element scene_element--fadein">
-						<div class="row">
-  <div class="main index">
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
     
-      <article class="list-item">
-        
-        <!-- 置顶 -->
-        
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
 
-        <!-- 是否显示首页图片 -->
-        <a href="/2021/09/26/hello-world/">
-          
-          <header class="post-header">
-          
-            <h1 class="post-title">
-              <span>Hello World</span>
-            </h1>
-          </header>
-        </a>
 
-        
-        <section class="post-info">
-          
-          <!-- 发布时间 -->
-          <span class="post-date">发布于
-            <span class="post-date-text"> 2021-09-26</span>
-          </span>
-              
-          <!-- 分类 -->
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
           
 
-          <!-- 标签 -->
+          <div class="content index posts-expand">
+            
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/26/hello-world/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="onno">
+      <meta itemprop="description" content="onno 求索心路历程 ，路漫漫其修远兮，吾将上下而求索">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="onno">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
           
-                    
-        </section>
+            <a href="/2021/09/26/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
+        </h2>
 
-        <div class="post-main">
-          <div class="post-item">
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
 
-            <!-- 导读部分 -->
-            <section class="post-abstract">
-              
-                Welcome to Hexo! This is your very first post. Check documentation for more i...
-              
-            </section>
-    
-            <!-- 点击阅读更多 -->
-            <span class="read-more btn"><a href="/2021/09/26/hello-world/" >阅读更多...</a></span>
-          </div>
+              <time title="Created: 2021-09-26 16:33:21" itemprop="dateCreated datePublished" datetime="2021-09-26T16:33:21+08:00">2021-09-26</time>
+            </span>
+
+          
+
         </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-      </article>
-    
+          <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
 
-    <!-- 分页部分 -->
+<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+
+      
+    </div>
+
     
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
   
 
-  </div>
 
-  <!-- aside部分 -->
   
-    <aside>
-      <div class="aside-wrap">
-    
-        <section class="widget-wrap">
-    <h3 class="widget-title">简介</h3>
-    <div class="widget">
-        <div class="notice">
-            <img class="notice-img" src="https://avatars.githubusercontent.com/u/8000921?v=4">
-            <p>路漫漫其修远兮，吾将上下而求索</p>
-            
-            <p class="notice-item">
-                <!-- github -->
-                <span><a target="_blank" href="https://github.com/onnoink"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
-                <!-- juejin -->
-                <span><a target="_blank" href=""><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
-                <!-- zhihu -->
-                <span><a target="_blank" href=""><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
-                <!-- csdn -->
-                <span><a target="_blank" href=""><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
-            </p>
-
-            <ul class="statistics">
-                <li>
-                    <span>文章</span>
-                    <a href="./archives">1</a>
-                </li>
-                <li>
-                    <span>字数</span>
-                    <a>75</a>
-                </li>
-                <li>
-                    <span>访客</span>
-                    <a id="busuanzi_value_site_uv"></a>
-                </li>
-                
-                
-            </ul>
-
-            <div id="follow" class="button">
-                <a target="_blank" href="https://github.com/shuxhan">关注</a>
-            </div>
-        </div>
-    </div>
-</section>
-
-    
-        
-
-    
-        
-
-    
-        
-  <div class="widget-wrap">
-    <h3 class="widget-title">最新文章</h3>
-    <div class="widget">
-      <ul class="recent-posts">
-        
-          <li>
-            <a href="/2021/09/26/hello-world/">Hello World</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-    
-        
-  <section class="widget-wrap">
-    <h3 class="widget-title">归档</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/09/">September 2021</a></li></ul>
-    </div>
-  </section>
 
 
-    
-        <!-- 
-  <section class="widget-wrap">
-    <h3 class="widget-title">友情链接</h3>
-    <div>
-      <ul class="widget-links">
+
+          </div>
           
-          <li>
-              <a target="_blank" rel="noopener" href="https://www.shuxhan.com" title="">
-                  求索日记
-              </a>
-          </li>
-          
-      </ul>
-    </div>
-  </section>
-
-
-<style>
-  .widget-links {
-    list-style: none;
-    padding-left: 10px;
-  }
-  .widget-links >li > a:hover {
-    color: #f40;
-    text-decoration: underline;
-  }
-</style> -->
-    
-    
-</div>
-
-    </aside>
-  
-</div>
-
-
-					</div>
-				</div>
-
-				<!-- 返回顶部按钮 -->
-				<div class="right-icon">
-					<div id="to-top" class="right-icon-item">
-						<a>
-							<span class="top-left"></span>
-							<span class="top-right"></span>
-						</a>
-					</div>
-				</div>
-		</div>
-		<footer class="footer">
-
-    <div class="copyright-wrap">
-      <span>&copy; 2020-2021 onno</span>
-      <span id="timeDate">载入天数...</span><span id="busuanzi_container_site_pv">
-      总访问量<span id="busuanzi_value_site_pv"></span>次
-    </span>
-    
-</div>
-    
-    
-    <!-- <span id="busuanzi_container_site_uv">
-      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
-    </span> -->
-    
-</footer>
 
 <script>
-    var now = new Date();
-    function createtime() {
-      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
-      now.setTime(now.getTime() + 250);
-      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
-      document.getElementById("timeDate").innerHTML = "本站已安全运行 " + dnum + " 天 ";
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
     }
-    setInterval("createtime()", 1000);
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
 </script>
 
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-
-<script src="/lib/jquery.js"></script>
-
-
-<script src="/lib/waves.js"></script>
-
-
-<script src="/lib/jquery-ui.js"></script>
-
-
-<script src="/lib/jquery.tocify.js"></script>
-
-
-<script src="/js/main.js"></script>
-
-
-			
-<style>
-  .copy-btn {
-    display: inline-block;
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 20px;
-    color: rgb(206, 206, 206);
-    white-space: nowrap;
-    vertical-align: middle;
-    cursor: pointer;
-    border-radius: 3px;
-    user-select: none;
-    outline: 0;
-  }
-
-  .copy-btn:hover {
-    color: #888
-  }
-
-  .highlight-wrap .copy-btn {
-    padding: 2px 6px;
-    position: absolute;
-    right: 10px;
-    top: 1px;
-    z-index: 1;
-  }
-
-
-
-  .highlight-wrap {
-    position: relative;
-  }
-
-  #copysuccess {
-    width: 200px;
-    height: 75px;
-    position: fixed;
-    right: 50%;
-    margin-right: -100px;
-    top: 40%;
-    margin-top: -40px;
-    color: #fff;
-    font-weight: 600;
-    background: #444444d8;
-    display: none;
-    z-index: 99999;
-    border-radius: 10px;
-    text-align: center;
-    line-height: 30px;
-    padding-top: 10px;
-    user-select: none;
-  }
-</style>
-
-<script>
-  addLoadEvent(() => {
-    $('.highlight').each(function (i, e) {
-      var $wrap = $('<div>').addClass('highlight-wrap')
-      $(e).after($wrap)
-      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
-        var copysuccess = document.getElementById('copysuccess');
-        copysuccess.style.display = 'block'
-        setTimeout(function () {
-          copysuccess.style.display = 'none'
-        }, 2000)
-        var code = $(this).parent().find(".code")[0].innerText
+        </div>
           
-                var ta = document.createElement('textarea')
-        document.body.appendChild(ta)
-        ta.style.position = 'absolute'
-        ta.style.top = '0px'
-        ta.style.left = '0px'
-        ta.value = code
-        ta.select()
-        ta.focus()
-        var result = document.execCommand('copy')
-        document.body.removeChild(ta)
-          
-                  if (result) $(this).text('复制成功')
-            else $(this).text('复制失败')
-              
-                $(this).blur()
-      })).on('mouseleave', function (e) {
-        var $b = $(this).find('.copy-btn')
-        setTimeout(function () {
-          $b.text('复制代码')
-        }, 1000)
-      }).append(e)
-    })
-  })
-</script>
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
 
-				<div id="copysuccess">复制成功<br>欢迎阅读文章~</div>
-	</body>
+  <aside class="sidebar">
+    <div class="sidebar-inner">
 
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">onno</p>
+  <div class="site-description" itemprop="description">onno 求索心路历程 ，路漫漫其修远兮，吾将上下而求索</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">onno</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
 </html>
-
-<script>
-	$('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
-</script>
