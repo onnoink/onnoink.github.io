@@ -20,21 +20,20 @@
     var CONFIG = {"hostname":"onno.ink","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="悲催进行时之前去面试某音乐平台，最后一个算法题，贼简单，链表回文字符串，结果个人因为太紧张，思路阻塞，最终没有做出来，面试也挂了，其实这个题目我做过，而且我还记得思路，快慢指针法，但是实际做的时候，很多边界问题和奇偶问题又让我变得不知所措，所以后来看了算法训练营的大哥的课程，感觉收获颇丰，所以在此记录我的刷题记录和刷题大法。 精通一门知识的技巧授人以鱼，不如授人以渔，这门课的第一个最大的收获是自信">
-<meta property="og:type" content="article">
-<meta property="og:title" content="起始篇幅-五毒刷题之LeetCode破解大法">
-<meta property="og:url" content="https://onno.ink/2021/09/26/%E4%BA%94%E6%AF%92%E5%88%B7%E9%A2%98%E4%B9%8BLeetCode%E7%A0%B4%E8%A7%A3%E5%A4%A7%E6%B3%95/">
+  <meta name="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+<meta property="og:type" content="website">
+<meta property="og:title" content="tags">
+<meta property="og:url" content="https://onno.ink/tags/">
 <meta property="og:site_name" content="onno">
-<meta property="og:description" content="悲催进行时之前去面试某音乐平台，最后一个算法题，贼简单，链表回文字符串，结果个人因为太紧张，思路阻塞，最终没有做出来，面试也挂了，其实这个题目我做过，而且我还记得思路，快慢指针法，但是实际做的时候，很多边界问题和奇偶问题又让我变得不知所措，所以后来看了算法训练营的大哥的课程，感觉收获颇丰，所以在此记录我的刷题记录和刷题大法。 精通一门知识的技巧授人以鱼，不如授人以渔，这门课的第一个最大的收获是自信">
+<meta property="og:description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
 <meta property="og:locale">
-<meta property="article:published_time" content="2021-09-26T10:52:20.000Z">
-<meta property="article:modified_time" content="2021-09-27T06:06:27.917Z">
+<meta property="article:published_time" content="2021-09-27T06:08:43.000Z">
+<meta property="article:modified_time" content="2021-09-27T06:09:20.106Z">
 <meta property="article:author" content="onno">
-<meta property="article:tag" content="LeetCode">
-<meta property="article:tag" content="学习方式">
+<meta property="article:tag" content="onno onno求索笔记 onno个人博客">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://onno.ink/2021/09/26/%E4%BA%94%E6%AF%92%E5%88%B7%E9%A2%98%E4%B9%8BLeetCode%E7%A0%B4%E8%A7%A3%E5%A4%A7%E6%B3%95/">
+<link rel="canonical" href="https://onno.ink/tags/">
 
 
 <script id="page-configurations">
@@ -42,12 +41,13 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : true,
+    isPost : false,
     lang   : 'zh'
   };
 </script>
 
-  <title>起始篇幅-五毒刷题之LeetCode破解大法 | onno</title>
+  <title>tags | onno
+</title>
   
 
 
@@ -183,104 +183,51 @@
       <div class="main-inner">
         <div class="content-wrap">
           
+  
+  
 
-          <div class="content post posts-expand">
+          <div class="content page posts-expand">
             
 
     
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/26/%E4%BA%94%E6%AF%92%E5%88%B7%E9%A2%98%E4%B9%8BLeetCode%E7%A0%B4%E8%A7%A3%E5%A4%A7%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar_me.png">
-      <meta itemprop="name" content="onno">
-      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="onno">
-    </span>
+    
+    
+    <div class="post-block" lang="zh">
       <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          起始篇幅-五毒刷题之LeetCode破解大法
-        </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
+<h1 class="post-title" itemprop="name headline">tags
+</h1>
 
-              <time title="Created: 2021-09-26 18:52:20" itemprop="dateCreated datePublished" datetime="2021-09-26T18:52:20+08:00">2021-09-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-27 14:06:27" itemprop="dateModified" datetime="2021-09-27T14:06:27+08:00">2021-09-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
-                </span>
-            </span>
+<div class="post-meta">
+  
 
-          
+</div>
 
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
+</header>
 
       
-        <h1 id="悲催进行时"><a href="#悲催进行时" class="headerlink" title="悲催进行时"></a>悲催进行时</h1><p>之前去面试某音乐平台，最后一个算法题，贼简单，链表回文字符串，结果个人因为太紧张，思路阻塞，最终没有做出来，面试也挂了，其实这个题目我做过，而且我还记得思路，快慢指针法，但是实际做的时候，很多边界问题和奇偶问题又让我变得不知所措，所以后来看了算法训练营的大哥的课程，感觉收获颇丰，所以在此记录我的刷题记录和刷题大法。</p>
-<h1 id="精通一门知识的技巧"><a href="#精通一门知识的技巧" class="headerlink" title="精通一门知识的技巧"></a>精通一门知识的技巧</h1><p>授人以鱼，不如授人以渔，这门课的第一个最大的收获是自信，就是其实天才没有那么多，很多算法题你看起来没有任何思路是正常的，大神有时候也是毫无思路，所以不要因为一个题目毫无思路就自我否定觉着自己是不是不适合做一名开发工程师。<br>其次的收获就是精通一门知识的技巧</p>
-<h2 id="Chunk-It-Up"><a href="#Chunk-It-Up" class="headerlink" title="Chunk It Up"></a>Chunk It Up</h2><p>拆分知识点，算法知识浩如烟海，如果零散的学习，不对知识点进行归纳和拆分，最后不能形成解题的套路，那学习带来的成效就不大，所以不单单对算法，对任何一门知识，都应该把他们拆分成小的知识点，然后攻克这些小的知识点，最后连点成线，全面掌握一门知识。</p>
-<h2 id="Deliberate-Practcing"><a href="#Deliberate-Practcing" class="headerlink" title="Deliberate Practcing"></a>Deliberate Practcing</h2><p>刻意练习，前面说面试的时候，明明做过的题，结果没有做出来，其实就是因为当时做了一次之后，只记了一个大概的解题方式，没有了解每一步的细节的处理，也就是所谓的眼高手低，最终没能做出这道题目。所以扎实才是算法攻克的最佳实践，刻意练习是扎实掌握算法解题细节的不二法门，所谓刻意练习，老师总结一个五毒刷题法，我自己修改理解后整理为，对每一道题，至少要进行5遍的刻意练习，而且根据遗忘曲线，五遍练习需要分散在人类遗忘曲线的关键点上，我借助一些手机上遗忘曲线的APP，对每一道我做过的题目进行管理，分为首次练习、次日、一周后、一个月后、90天后进行题目的刻意训练。通过多次的刻意训练，真正掌握解题思路和方法。</p>
-<h2 id="FeedBack"><a href="#FeedBack" class="headerlink" title="FeedBack"></a>FeedBack</h2><p>反馈，这个是我觉着最重要的一点，也是解题思路和套路形成的最关键的点，有些题目可能大家看了答案能够在当时机械化的翻译写出答案，但是实际上没有理解这个题目的实际意义，所以通过查看解答，获取的反馈尤其重要，除了了解怎么做，更重要的是了解为什么这样做。</p>
-<h1 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h1><p>接下来会把践行的过程也同步的发出来，写字太麻烦了啊啊啊</p>
-
-    </div>
-
-    
-    
-    
-
-      <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/LeetCode/" rel="tag"># LeetCode</a>
-              <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%BC%8F/" rel="tag"># 学习方式</a>
+      
+      
+      <div class="post-body">
+          <div class="tag-cloud">
+            <div class="tag-cloud-title">
+              2 tags in total
+            </div>
+            <div class="tag-cloud-tags">
+              <a href="/tags/LeetCode/" style="font-size: 12px; color: #ccc">LeetCode</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%BC%8F/" style="font-size: 12px; color: #ccc">学习方式</a>
+            </div>
           </div>
-
         
-
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2021/09/26/hello-world/" rel="prev" title="诫勉">
-      <i class="fa fa-chevron-left"></i> 诫勉
-    </a></div>
-      <div class="post-nav-item"></div>
+      </div>
+      
+      
+      
     </div>
-      </footer>
     
-  </article>
-  
-  
-  
 
+    
+    
+    
 
 
           </div>
@@ -331,7 +278,6 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%82%B2%E5%82%AC%E8%BF%9B%E8%A1%8C%E6%97%B6"><span class="nav-number">1.</span> <span class="nav-text">悲催进行时</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B2%BE%E9%80%9A%E4%B8%80%E9%97%A8%E7%9F%A5%E8%AF%86%E7%9A%84%E6%8A%80%E5%B7%A7"><span class="nav-number">2.</span> <span class="nav-text">精通一门知识的技巧</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Chunk-It-Up"><span class="nav-number">2.1.</span> <span class="nav-text">Chunk It Up</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Deliberate-Practcing"><span class="nav-number">2.2.</span> <span class="nav-text">Deliberate Practcing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FeedBack"><span class="nav-number">2.3.</span> <span class="nav-text">FeedBack</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E6%9D%9F%E8%AF%AD"><span class="nav-number">3.</span> <span class="nav-text">结束语</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
