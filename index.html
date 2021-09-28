@@ -210,10 +210,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2021-09-27 18:08:21 / Modified: 19:00:54" itemprop="dateCreated datePublished" datetime="2021-09-27T18:08:21+08:00">2021-09-27</time>
+              <time title="Created: 2021-09-27 18:08:21" itemprop="dateCreated datePublished" datetime="2021-09-27T18:08:21+08:00">2021-09-27</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 10:01:45" itemprop="dateModified" datetime="2021-09-28T10:01:45+08:00">2021-09-28</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -255,7 +261,7 @@
 <p>上面的都是点子背，我们弄一个正常的来算一下</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">12 - 9 = [0000,1100](补) + [1111,0111](补) = &#123;1&#125;[0000,0011](补) = [0000,0011](原) = 3</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<p>也是正确的</p>
+<p>也是正确的 ，所以我们得到一个规律，一个符号整数的取值范围和他所占用的位数的n的关系为 [-(2^(n-1)),2^(n-1)-1], MySQL Int 类型的位数是32位置，所以MySQL Int的取值范围是 [-(2^(32-1)),2^(32-1)-1] 是 [-2 147 483 648,2 147 483 647]</p>
 
       
     </div>
