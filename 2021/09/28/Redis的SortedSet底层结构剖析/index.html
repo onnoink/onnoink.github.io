@@ -20,31 +20,34 @@
     var CONFIG = {"hostname":"onno.ink","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-<meta property="og:type" content="website">
-<meta property="og:title" content="onno">
-<meta property="og:url" content="https://onno.ink/index.html">
+  <meta name="description" content="悲催时刻又又又去面试了，面试官问了一个有序集合底层的数据结构是什么？我想可能很多没有细致了解Redis源码的同学听的最多的就是跳表这个数据结构了，所以我脱口而出跳表，然后面试官很坏，他问了一个给我说一下ZSCORE的时间复杂度，我就在心里默默的计算，岂不是O(n)吗？然后面试官笑笑不说话，结果可相知，我又又又挂了。 亡羊补牢然后我当然又去恶补了一下Redis一些基础知识，此时才知道当时的自己多么的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis的SortedSet底层结构剖析">
+<meta property="og:url" content="https://onno.ink/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/index.html">
 <meta property="og:site_name" content="onno">
-<meta property="og:description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+<meta property="og:description" content="悲催时刻又又又去面试了，面试官问了一个有序集合底层的数据结构是什么？我想可能很多没有细致了解Redis源码的同学听的最多的就是跳表这个数据结构了，所以我脱口而出跳表，然后面试官很坏，他问了一个给我说一下ZSCORE的时间复杂度，我就在心里默默的计算，岂不是O(n)吗？然后面试官笑笑不说话，结果可相知，我又又又挂了。 亡羊补牢然后我当然又去恶补了一下Redis一些基础知识，此时才知道当时的自己多么的">
 <meta property="og:locale">
+<meta property="article:published_time" content="2021-09-28T07:42:47.000Z">
+<meta property="article:modified_time" content="2021-10-08T08:03:31.019Z">
 <meta property="article:author" content="onno">
-<meta property="article:tag" content="onno onno求索笔记 onno个人博客">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="NoSQL">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://onno.ink/">
+<link rel="canonical" href="https://onno.ink/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh'
   };
 </script>
 
-  <title>onno</title>
+  <title>Redis的SortedSet底层结构剖析 | onno</title>
   
 
 
@@ -181,9 +184,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
@@ -199,10 +203,9 @@
       <meta itemprop="name" content="onno">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/" class="post-title-link" itemprop="url">Redis的SortedSet底层结构剖析</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          Redis的SortedSet底层结构剖析
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -241,7 +244,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="悲催时刻"><a href="#悲催时刻" class="headerlink" title="悲催时刻"></a>悲催时刻</h1><p>又又又去面试了，面试官问了一个有序集合底层的数据结构是什么？我想可能很多没有细致了解Redis源码的同学听的最多的就是<code>跳表</code>这个数据结构了，所以我脱口而出跳表，然后面试官很坏，他问了一个给我说一下<code>ZSCORE</code>的时间复杂度，我就在心里默默的计算，岂不是<code>O(n)</code>吗？然后面试官笑笑不说话，结果可相知，我又又又挂了。</p>
+        <h1 id="悲催时刻"><a href="#悲催时刻" class="headerlink" title="悲催时刻"></a>悲催时刻</h1><p>又又又去面试了，面试官问了一个有序集合底层的数据结构是什么？我想可能很多没有细致了解Redis源码的同学听的最多的就是<code>跳表</code>这个数据结构了，所以我脱口而出跳表，然后面试官很坏，他问了一个给我说一下<code>ZSCORE</code>的时间复杂度，我就在心里默默的计算，岂不是<code>O(n)</code>吗？然后面试官笑笑不说话，结果可相知，我又又又挂了。</p>
 <h1 id="亡羊补牢"><a href="#亡羊补牢" class="headerlink" title="亡羊补牢"></a>亡羊补牢</h1><p>然后我当然又去恶补了一下Redis一些基础知识，此时才知道当时的自己多么的浅薄。这次主要说Redis的Sorted Set数据类型，其他的等我下次面试再挂了再来跟大家说吧。</p>
 <h2 id="Redis的基础结构"><a href="#Redis的基础结构" class="headerlink" title="Redis的基础结构"></a>Redis的基础结构</h2><p>Redis是一个键值对数据库，所以Redis数据库底层存储键值对的结构是哈希表，Redis中有一个<code>struct</code>类型是<code>dicht</code>就是一个对hash表的封装，Redis使用一个MurMurHash(我不知道你们怎么记忆，我记忆的方式特恶心，muamuahash亲亲hash)来寻找每个key在哈希表中的位置，然后用链表法解决哈希冲突(顺便说一下，链表法每次都是把新的元素放在开头的位置)。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dictht &#123;</span><br><span class="line">    // table是一个数组的二级指针，就是每个哈希表结构必备的数组结构</span><br><span class="line">    dictEntry **table;</span><br><span class="line">    // size 是上面那个数组的长度</span><br><span class="line">    unsigned long size;</span><br><span class="line">    // 这个用来算根据hash函数生成的数组在数组索引位置的掩码</span><br><span class="line">    unsigned long sizemask;</span><br><span class="line">    // 这个表用了多少</span><br><span class="line">    unsigned long used;</span><br><span class="line">&#125; dictht;</span><br></pre></td></tr></table></figure>
@@ -256,261 +259,34 @@
 
 <h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>是一个哈希表和一个跳表，所以执行<code>zscore</code>的时候不用遍历跳表的<code>level0</code>的全部元素，直接使用hash表进行定位就可以,时间复杂度是<code>O(1)</code></p>
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"># Redis</a>
+              <a href="/tags/NoSQL/" rel="tag"># NoSQL</a>
+          </div>
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/27/Mysql%E7%9A%84Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/">
+        
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar_me.png">
-      <meta itemprop="name" content="onno">
-      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-    </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="onno">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/27/Mysql%E7%9A%84Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/" class="post-title-link" itemprop="url">Mysql Int类型的取值范围</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-27 18:08:21" itemprop="dateCreated datePublished" datetime="2021-09-27T18:08:21+08:00">2021-09-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-28 10:04:29" itemprop="dateModified" datetime="2021-09-28T10:04:29+08:00">2021-09-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">计算机组成原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="悲催时刻"><a href="#悲催时刻" class="headerlink" title="悲催时刻"></a>悲催时刻</h1><p>面试的时候，被问到 MySQL Int 类型的取值范围，一开始寻思问的不会是宽度的设置吧，最后真的竟然是问取值范围，MySQL的Int是32位的，那32位的Int类型的取值范围是多少呢？一时间我竟然有些恍惚，每次看到int8的取值范围我们的肌肉记忆就会告诉我们是<code>[-128,127]</code>，但是为啥是这个取值范围呢？我掐指一算，不应该是<code>[-127,127](注意，这个是错误的！！！)</code>吗？<br>第一位是符号位置，所以<code>[0111,1111]</code>是<code>127</code>，<code>[1111,1111]</code>是<code>-127</code>岂不是爽歪歪？结果正确的答案是<code>[-128,127]</code>，我就不知道你怎么给老子存<code>-128</code></p>
-<p>结果可想而知，我又挂了</p>
-<h1 id="亡羊补牢"><a href="#亡羊补牢" class="headerlink" title="亡羊补牢"></a>亡羊补牢</h1><p>为了熟练掌握这个基础知识，我又又又一次开始Google，终于有一定的理解，计算机里带符号类型的整数都是使用一种称为<code>补码</code>的方式存储的，为啥呢？因为CPU内部的哪些乱七八糟的门电路什么的，费老大劲才能组成一个<code>全加器</code>用来对两个数进行加法运算，结果你给老子来个减法？所以为了减少复杂数字电路的设计，复用<code>全加器</code>，出现了<code>原码</code>、<code>反码</code>和<code>补码</code>的概念，要有一个概念就是符号整数在内存里都是补码存储的，便于运算.</p>
-<h2 id="原码、反码和补码"><a href="#原码、反码和补码" class="headerlink" title="原码、反码和补码"></a>原码、反码和补码</h2><p><code>原码</code> 就是我们学习和理解的符号整形的二进制表示方式，例如<code>-3</code>用<code>[1000,0011]</code>表示，<code>+3</code>用<code>[0000,0011]</code>表示</p>
-<p><code>反码</code> 正数的反码和原码一样，负数的反码是<code>符号为不变,其余位取反</code>，所以 <code>+3</code> 的反码还是<code>[0000,0011]</code>，<code>-3</code>的反码是[1111,1100],</p>
-<p><code>补码</code> 正数的补码和原码一样，负数的补码是<code>符号为不变,其余位取反后+1</code>，所以 <code>+3</code> 的补码还是<code>[0000,0011]</code>，<code>-3</code>的补码是[1111,1101]</p>
-<h2 id="CPU-符号整数的加减法的计算"><a href="#CPU-符号整数的加减法的计算" class="headerlink" title="CPU 符号整数的加减法的计算"></a>CPU 符号整数的加减法的计算</h2><p>上面我们说过，为了复用<code>加法器</code>，我们需要把<code>减法</code>干掉，恰好我们有一个定理是<code>1-1 = 1+(-1)</code>，哈哈哈，怎么样，这不就把减法<br>干掉了吗？我们来试试</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](原) + [1000,0011](原) = [1000,0110](原) = -6 </span><br></pre></td></tr></table></figure>
-<p>错的离谱，符号为参与运算，错的不能再错了，难道再设计个电路专门处理符号位？这也太蠢了，我们用新技能<code>反码</code>试试</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](反) + [1111,1100](反) =  [1111,1111](反) = [1000,0000](原) = -0 </span><br></pre></td></tr></table></figure>
-
-<p>bingo! 答对了，但是 [1000,0000] 是 <code>-0</code> 难道[0000,0000]是<code>+0</code>吗？<code>+0</code>和<code>-0</code>怕不是不相等吧，所以我们再用另一个新技能<code>补码试试</code></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](补) + [1111,1101](补) = &#123;1&#125;[0000,0000](补) = [1000,0000](原) = 0 </span><br></pre></td></tr></table></figure>
-<p><code>补码</code>有点神奇啊，竟然溢出了一个位置，咋办，难不成把前面哪个数据的内存给偷摸的改了? 其实不是，加法器会丢弃溢出的位置，符号为的新值作为符号的判定，所以上面是[0000,0000] 是 0</p>
-<p>这个例子不好，我们换一个再试一次</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-127 - 1 = (-127) + (-1) = [1000,0001](补) + [1111,1111](补) = &#123;1&#125;[1000,0000](补) = [1000,0000](原) </span><br></pre></td></tr></table></figure>
-<p>点子不好，咋又溢出了，我们把它按照惯丢掉，变成了<code>[1000,0000]</code>，你大爷的，<code>-0</code>你怎么又来了，结果不应该是<code>-128</code>吗，所以大家一生气，让[1000,0000]就代表<code>-128</code>吧，所以在<code>补码</code>表示中[1000,0000]就代表了(-128),原先的<code>-0</code>没了，但是<code>+0</code>还在,所以Int(8)的取值范围就是[1000,0000] 到 [0111,1111] 也就是<code>[-128,127]</code></p>
-<p>上面的都是点子背，我们弄一个正常的来算一下</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">12 - 9 = [0000,1100](补) + [1111,0111](补) = &#123;1&#125;[0000,0011](补) = [0000,0011](原) = 3</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>也是正确的</p>
-<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>所以我们得到一个规律，一个符号整数的取值范围和他所占用的位数的n的关系为 <code>[-(2^(n-1)),2^(n-1)-1]</code>, MySQL Int 类型的位数是32位置，所以MySQL Int的取值范围是 <code>[-(2^(32-1)),2^(32-1)-1]</code> 是 <code>[-2 147 483 648,2 147 483 647]</code></p>
-
-      
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/27/Mysql%E7%9A%84Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/" rel="prev" title="Mysql Int类型的取值范围">
+      <i class="fa fa-chevron-left"></i> Mysql Int类型的取值范围
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/26/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5%20%E4%BA%94%E6%AF%92%E5%88%B7%E9%A2%98%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar_me.png">
-      <meta itemprop="name" content="onno">
-      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="onno">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/26/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5%20%E4%BA%94%E6%AF%92%E5%88%B7%E9%A2%98%E6%B3%95/" class="post-title-link" itemprop="url">算法训练营 五毒刷题法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-26 18:52:20" itemprop="dateCreated datePublished" datetime="2021-09-26T18:52:20+08:00">2021-09-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-27 18:08:02" itemprop="dateModified" datetime="2021-09-27T18:08:02+08:00">2021-09-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="悲催进行时"><a href="#悲催进行时" class="headerlink" title="悲催进行时"></a>悲催进行时</h1><p>之前去面试某音乐平台，最后一个算法题，贼简单，链表回文字符串，结果个人因为太紧张，思路阻塞，最终没有做出来，面试也挂了，其实这个题目我做过，而且我还记得思路，快慢指针法，但是实际做的时候，很多边界问题和奇偶问题又让我变得不知所措，所以后来看了算法训练营的大哥的课程，感觉收获颇丰，所以在此记录我的刷题记录和刷题大法。</p>
-<h1 id="精通一门知识的技巧"><a href="#精通一门知识的技巧" class="headerlink" title="精通一门知识的技巧"></a>精通一门知识的技巧</h1><p>授人以鱼，不如授人以渔，这门课的第一个最大的收获是自信，就是其实天才没有那么多，很多算法题你看起来没有任何思路是正常的，大神有时候也是毫无思路，所以不要因为一个题目毫无思路就自我否定觉着自己是不是不适合做一名开发工程师。<br>其次的收获就是精通一门知识的技巧</p>
-<h2 id="Chunk-It-Up"><a href="#Chunk-It-Up" class="headerlink" title="Chunk It Up"></a>Chunk It Up</h2><p>拆分知识点，算法知识浩如烟海，如果零散的学习，不对知识点进行归纳和拆分，最后不能形成解题的套路，那学习带来的成效就不大，所以不单单对算法，对任何一门知识，都应该把他们拆分成小的知识点，然后攻克这些小的知识点，最后连点成线，全面掌握一门知识。</p>
-<h2 id="Deliberate-Practcing"><a href="#Deliberate-Practcing" class="headerlink" title="Deliberate Practcing"></a>Deliberate Practcing</h2><p>刻意练习，前面说面试的时候，明明做过的题，结果没有做出来，其实就是因为当时做了一次之后，只记了一个大概的解题方式，没有了解每一步的细节的处理，也就是所谓的眼高手低，最终没能做出这道题目。所以扎实才是算法攻克的最佳实践，刻意练习是扎实掌握算法解题细节的不二法门，所谓刻意练习，老师总结一个五毒刷题法，我自己修改理解后整理为，对每一道题，至少要进行5遍的刻意练习，而且根据遗忘曲线，五遍练习需要分散在人类遗忘曲线的关键点上，我借助一些手机上遗忘曲线的APP，对每一道我做过的题目进行管理，分为首次练习、次日、一周后、一个月后、90天后进行题目的刻意训练。通过多次的刻意训练，真正掌握解题思路和方法。</p>
-<h2 id="FeedBack"><a href="#FeedBack" class="headerlink" title="FeedBack"></a>FeedBack</h2><p>反馈，这个是我觉着最重要的一点，也是解题思路和套路形成的最关键的点，有些题目可能大家看了答案能够在当时机械化的翻译写出答案，但是实际上没有理解这个题目的实际意义，所以通过查看解答，获取的反馈尤其重要，除了了解怎么做，更重要的是了解为什么这样做。</p>
-<h1 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h1><p>接下来会把践行的过程也同步的发出来，写字太麻烦了啊啊啊</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/26/%E8%AF%AB%E5%8B%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar_me.png">
-      <meta itemprop="name" content="onno">
-      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="onno">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/26/%E8%AF%AB%E5%8B%89/" class="post-title-link" itemprop="url">诫勉</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-26 18:28:21" itemprop="dateCreated datePublished" datetime="2021-09-26T18:28:21+08:00">2021-09-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-27 18:07:12" itemprop="dateModified" datetime="2021-09-27T18:07:12+08:00">2021-09-27</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>断断续续用Hexo + Github Pages 功能搭建了N次这个博客了，每次都是无疾而终，希望这次的能持续的坚持下去</p>
-<p>没有坚持下去的原因一般是因为没有一个明确的目标和与之匹配的规划，下一步就是要做一个具体的博客涉及内容的规划，初步设想会包括<code>数据结构和算法</code>,<code>MySQL</code>,<code>Redis</code>,<code>Golang</code>几个方向的内容，主要来源是日常学习和工作中设计的知识点。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
   
 
 
@@ -563,6 +339,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%82%B2%E5%82%AC%E6%97%B6%E5%88%BB"><span class="nav-number">1.</span> <span class="nav-text">悲催时刻</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%A1%E7%BE%8A%E8%A1%A5%E7%89%A2"><span class="nav-number">2.</span> <span class="nav-text">亡羊补牢</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E7%9A%84%E5%9F%BA%E7%A1%80%E7%BB%93%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">Redis的基础结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Sorted-Set%E7%9A%84%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.</span> <span class="nav-text">Sorted Set的结构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">3.</span> <span class="nav-text">结论</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
