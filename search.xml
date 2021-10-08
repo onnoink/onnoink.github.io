@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>算法训练营-430扁平化多级双向链表</title>
+      <link href="/2021/10/02/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5-430%E6%89%81%E5%B9%B3%E5%8C%96%E5%A4%9A%E7%BA%A7%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8/"/>
+      <url>/2021/10/02/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5-430%E6%89%81%E5%B9%B3%E5%8C%96%E5%A4%9A%E7%BA%A7%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8/</url>
+      
+        <content type="html"><![CDATA[<h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><blockquote><p><a href="https://leetcode-cn.com/problems/flatten-a-multilevel-doubly-linked-list/">https://leetcode-cn.com/problems/flatten-a-multilevel-doubly-linked-list/</a></p></blockquote><h1 id="首次练习"><a href="#首次练习" class="headerlink" title="首次练习"></a>首次练习</h1><blockquote><p>2021-09-24</p></blockquote><p>首次没有完美解决，只有一个大概思路，但是没有正确解决，查看解析后解决，记录大概思路<br>这题使用递归的方式进行解决，从跟节点开始遍历每个节点，如果改节点包含子级节点，则递归遍历该节点的子节点。并将改节点的Next节点和子级别节点的最后一个节点关联在一起，直到当前级别节点遍历完成。</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">func flatten(root *Node) *Node &#123;</span><br><span class="line">    ft(root)</span><br><span class="line">    return root</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">func ft(node *Node) (last *Node) &#123;</span><br><span class="line">    cur := node </span><br><span class="line">    for cur != nil &#123;</span><br><span class="line">        // 为了遍历，当前级别节点，每次要把当前级别节点记下来，防止当前节点的Next指向Child的时候，Next信息丢失</span><br><span class="line">        next := cur.Next</span><br><span class="line">        // 如果当前节点包含子级链表的头节点，就遍历当前节点的子级链表</span><br><span class="line">        if cur.Child != nil &#123;</span><br><span class="line">            // 其实也是递归执行这个函数，考虑一种最简单的，二级切只有一个节点包含Child的情况，扁平化的最简单的就是用当前节点Child替换Next，然后子链表的Last指向当前节点的之前的Next，之前的Next指向子链表的Last。类似双向链表插入数据一样,对于多级，多个节点包含的情况实际是一样的，递归的情况下，永远是倒数第二和第一级别的合并，就是最简单的情况，当倒数第二和第一级别合并之后，倒数第三级别和倒数第二级别也就变成了最简单的情况</span><br><span class="line">            childLast := ft(cur.Child)</span><br><span class="line"></span><br><span class="line">            cur.Next = cur.Child</span><br><span class="line">            cur.Child.Prev = cur</span><br><span class="line">            cur.Child = nil</span><br><span class="line"></span><br><span class="line">            if next != nil &#123;</span><br><span class="line">                childLast.Next = next</span><br><span class="line">                next.Prev = childLast</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            // 这里需要理解一下，最简单情况下，当前最后一个其实就是子级链表的最后一个</span><br><span class="line">            last = childLast</span><br><span class="line"></span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            last = cur</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        cur = next</span><br><span class="line">    &#125;</span><br><span class="line">    return</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure><h1 id="第二次练习"><a href="#第二次练习" class="headerlink" title="第二次练习"></a>第二次练习</h1><blockquote><p>2021-09-25</p></blockquote><h3 id="反馈"><a href="#反馈" class="headerlink" title="反馈"></a>反馈</h3><p>时隔一天，还是很清楚的</p><h1 id="第三次练习"><a href="#第三次练习" class="headerlink" title="第三次练习"></a>第三次练习</h1><blockquote><p>2021-10-02</p></blockquote><h3 id="反馈-1"><a href="#反馈-1" class="headerlink" title="反馈"></a>反馈</h3><p>主要要明白从倒数第一级别和倒数第二级别开始合并，每次只考虑两级的合并即可，不要想象的太复杂！！！！</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 算法 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 链表 </tag>
+            
+            <tag> 双向链表 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Redis的SortedSet底层结构剖析</title>
       <link href="/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/"/>
       <url>/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/</url>
