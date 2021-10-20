@@ -4,6 +4,51 @@
   
     
     <entry>
+      <title>异或操作的解析</title>
+      <link href="/2021/10/20/%E5%BC%82%E6%88%96%E6%93%8D%E4%BD%9C%E7%9A%84%E8%A7%A3%E6%9E%90/"/>
+      <url>/2021/10/20/%E5%BC%82%E6%88%96%E6%93%8D%E4%BD%9C%E7%9A%84%E8%A7%A3%E6%9E%90/</url>
+      
+        <content type="html"><![CDATA[<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">异或，英文为exclusive OR，缩写成xor [1] </span><br><span class="line">异或（xor）是一个数学运算符。它应用于逻辑运算。异或的数学符号为“⊕”，计算机符号为“xor”。其运算法则为：</span><br><span class="line">a⊕b = (¬a ∧ b) ∨ (a ∧¬b)</span><br><span class="line">如果a、b两个值不相同，则异或结果为1。如果a、b两个值相同，异或结果为0。</span><br><span class="line">异或也叫半加运算，其运算法则相当于不带进位的二进制加法：二进制下用1表示真，0表示假，则异或的运算法则为：0⊕0=0，1⊕0=1，0⊕1=1，1⊕1=0（同为0，异为1），这些法则与加法是相同的，只是不带进位，所以异或常被认作不进位加法。</span><br><span class="line">异或略称为XOR、EX-OR</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
+      <categories>
+          
+          <category> 计算机组成原理 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>504Gateway-Timeout啥情况</title>
+      <link href="/2021/10/19/504Gateway-Timeout%E5%95%A5%E6%83%85%E5%86%B5/"/>
+      <url>/2021/10/19/504Gateway-Timeout%E5%95%A5%E6%83%85%E5%86%B5/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>Go语言Slice详解</title>
+      <link href="/2021/10/14/Go%E8%AF%AD%E8%A8%80Slice%E8%AF%A6%E8%A7%A3/"/>
+      <url>/2021/10/14/Go%E8%AF%AD%E8%A8%80Slice%E8%AF%A6%E8%A7%A3/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>算法训练营-430扁平化多级双向链表</title>
       <link href="/2021/10/02/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5-430%E6%89%81%E5%B9%B3%E5%8C%96%E5%A4%9A%E7%BA%A7%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8/"/>
       <url>/2021/10/02/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5-430%E6%89%81%E5%B9%B3%E5%8C%96%E5%A4%9A%E7%BA%A7%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8/</url>
