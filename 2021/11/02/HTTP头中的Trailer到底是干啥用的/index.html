@@ -21,17 +21,19 @@
   </script>
 
   <meta name="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-<meta property="og:type" content="website">
-<meta property="og:title" content="onno">
-<meta property="og:url" content="https://onno.ink/archives/2021/09/index.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTP头中的Trailer到底是干啥用的">
+<meta property="og:url" content="https://onno.ink/2021/11/02/HTTP%E5%A4%B4%E4%B8%AD%E7%9A%84Trailer%E5%88%B0%E5%BA%95%E6%98%AF%E5%B9%B2%E5%95%A5%E7%94%A8%E7%9A%84/index.html">
 <meta property="og:site_name" content="onno">
 <meta property="og:description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
 <meta property="og:locale">
+<meta property="article:published_time" content="2021-11-02T07:14:21.000Z">
+<meta property="article:modified_time" content="2021-11-02T07:14:21.528Z">
 <meta property="article:author" content="onno">
 <meta property="article:tag" content="onno onno求索笔记 onno个人博客">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://onno.ink/archives/2021/09/">
+<link rel="canonical" href="https://onno.ink/2021/11/02/HTTP%E5%A4%B4%E4%B8%AD%E7%9A%84Trailer%E5%88%B0%E5%BA%95%E6%98%AF%E5%B9%B2%E5%95%A5%E7%94%A8%E7%9A%84/">
 
 
 <script id="page-configurations">
@@ -39,12 +41,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'zh'
   };
 </script>
 
-  <title>Archive | onno</title>
+  <title>HTTP头中的Trailer到底是干啥用的 | onno</title>
   
 
 
@@ -181,110 +183,75 @@
         <div class="content-wrap">
           
 
-          <div class="content archive">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <span class="collection-header">Um..! 10 posts in total. Keep on posting.</span>
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/11/02/HTTP%E5%A4%B4%E4%B8%AD%E7%9A%84Trailer%E5%88%B0%E5%BA%95%E6%98%AF%E5%B9%B2%E5%95%A5%E7%94%A8%E7%9A%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_me.png">
+      <meta itemprop="name" content="onno">
+      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="onno">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HTTP头中的Trailer到底是干啥用的
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-11-02 15:14:21" itemprop="dateCreated datePublished" datetime="2021-11-02T15:14:21+08:00">2021-11-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2021</span>
+        
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2021-09-28T15:42:47+08:00"
-              content="2021-09-28">
-          09-28
-        </time>
-      </div>
+      <footer class="post-footer">
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/" itemprop="url">
-            <span itemprop="name">Redis的SortedSet底层结构剖析</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2021-09-27T18:08:21+08:00"
-              content="2021-09-27">
-          09-27
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/09/27/Mysql%E7%9A%84Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/" itemprop="url">
-            <span itemprop="name">Mysql Int类型的取值范围</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2021-09-26T18:52:20+08:00"
-              content="2021-09-26">
-          09-26
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/09/26/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5%20%E4%BA%94%E6%AF%92%E5%88%B7%E9%A2%98%E6%B3%95/" itemprop="url">
-            <span itemprop="name">算法训练营 五毒刷题法</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2021-09-26T18:28:21+08:00"
-              content="2021-09-26">
-          09-26
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/09/26/%E8%AF%AB%E5%8B%89/" itemprop="url">
-            <span itemprop="name">诫勉</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
+        
 
 
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/10/22/%E8%BF%99%E4%B8%80%E6%AC%A1%E8%AE%A4%E7%9C%9F%E4%BA%86%E8%A7%A3%E4%B8%80%E4%B8%8BCookie/" rel="prev" title="这一次认真了解一下Cookie">
+      <i class="fa fa-chevron-left"></i> 这一次认真了解一下Cookie
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-  </div>
+      </footer>
+    
+  </article>
   
   
-  
-
   
 
 
