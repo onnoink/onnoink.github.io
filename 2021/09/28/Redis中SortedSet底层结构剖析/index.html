@@ -22,19 +22,19 @@
 
   <meta name="description" content="悲催时刻又又又去面试了，面试官问了一个有序集合底层的数据结构是什么？我想可能很多没有细致了解Redis源码的同学听的最多的就是跳表这个数据结构了，所以我脱口而出跳表，然后面试官很坏，他问了一个给我说一下ZSCORE的时间复杂度，我就在心里默默的计算，岂不是O(n)吗？然后面试官笑笑不说话，结果可相知，我又又又挂了。 亡羊补牢然后我当然又去恶补了一下Redis一些基础知识，此时才知道当时的自己多么的">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Redis的SortedSet底层结构剖析">
-<meta property="og:url" content="https://onno.ink/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/index.html">
+<meta property="og:title" content="Redis-SortedSet底层结构剖析">
+<meta property="og:url" content="https://onno.ink/2021/09/28/Redis%E4%B8%ADSortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/index.html">
 <meta property="og:site_name" content="onno">
 <meta property="og:description" content="悲催时刻又又又去面试了，面试官问了一个有序集合底层的数据结构是什么？我想可能很多没有细致了解Redis源码的同学听的最多的就是跳表这个数据结构了，所以我脱口而出跳表，然后面试官很坏，他问了一个给我说一下ZSCORE的时间复杂度，我就在心里默默的计算，岂不是O(n)吗？然后面试官笑笑不说话，结果可相知，我又又又挂了。 亡羊补牢然后我当然又去恶补了一下Redis一些基础知识，此时才知道当时的自己多么的">
 <meta property="og:locale">
 <meta property="article:published_time" content="2021-09-28T07:42:47.000Z">
-<meta property="article:modified_time" content="2021-10-08T08:03:31.019Z">
+<meta property="article:modified_time" content="2021-12-02T08:36:36.396Z">
 <meta property="article:author" content="onno">
 <meta property="article:tag" content="Redis">
 <meta property="article:tag" content="NoSQL">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://onno.ink/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/">
+<link rel="canonical" href="https://onno.ink/2021/09/28/Redis%E4%B8%ADSortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/">
 
 
 <script id="page-configurations">
@@ -47,7 +47,7 @@
   };
 </script>
 
-  <title>Redis的SortedSet底层结构剖析 | onno</title>
+  <title>Redis-SortedSet底层结构剖析 | onno</title>
   
 
 
@@ -191,7 +191,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/28/Redis%E7%9A%84SortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/28/Redis%E4%B8%ADSortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar_me.png">
@@ -204,7 +204,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Redis的SortedSet底层结构剖析
+          Redis-SortedSet底层结构剖析
         </h1>
 
         <div class="post-meta">
@@ -221,7 +221,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-10-08 16:03:31" itemprop="dateModified" datetime="2021-10-08T16:03:31+08:00">2021-10-08</time>
+                <time title="Modified: 2021-12-02 16:36:36" itemprop="dateModified" datetime="2021-12-02T16:36:36+08:00">2021-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -277,12 +277,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/09/27/Mysql%E7%9A%84Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/" rel="prev" title="Mysql Int类型的取值范围">
+    <a href="/2021/09/27/Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/" rel="prev" title="Mysql Int类型的取值范围">
       <i class="fa fa-chevron-left"></i> Mysql Int类型的取值范围
     </a></div>
       <div class="post-nav-item">
-    <a href="/2021/10/02/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5-430%E6%89%81%E5%B9%B3%E5%8C%96%E5%A4%9A%E7%BA%A7%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8/" rel="next" title="算法训练营-430扁平化多级双向链表">
-      算法训练营-430扁平化多级双向链表 <i class="fa fa-chevron-right"></i>
+    <a href="/2021/10/14/Go%E8%AF%AD%E8%A8%80Slice%E8%AF%A6%E8%A7%A3/" rel="next" title="Go语言Slice详解">
+      Go语言Slice详解 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -358,7 +358,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">12</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
