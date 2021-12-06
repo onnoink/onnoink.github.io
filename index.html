@@ -212,7 +212,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2021-12-06 10:39:01 / Modified: 11:23:53" itemprop="dateCreated datePublished" datetime="2021-12-06T10:39:01+08:00">2021-12-06</time>
+              <time title="Created: 2021-12-06 10:39:01 / Modified: 15:13:16" itemprop="dateCreated datePublished" datetime="2021-12-06T10:39:01+08:00">2021-12-06</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -264,8 +264,93 @@
 <li><code>modules</code>目录包含目录模块代码</li>
 </ul>
 <h3 id="utils"><a href="#utils" class="headerlink" title="utils"></a>utils</h3><p>辅助功能目录，<br><img src="./img/1201638760793_.pic.jpg" alt="辅助功能代码"></p>
+<h2 id="模块划分"><a href="#模块划分" class="headerlink" title="模块划分"></a>模块划分</h2><p>按照<code>服务器实例</code>,<code>数据库数据类型和操作</code>,<code>可靠性和可扩展性</code>,<code>辅助功能</code>四个唯独划分模块。</p>
+<h3 id="服务器实例"><a href="#服务器实例" class="headerlink" title="服务器实例"></a>服务器实例</h3><ul>
+<li><p>服务端程序的入口<code>main函数</code>所在的<code>server.h/server.c</code></p>
+</li>
+<li><p>服务端是一个网络程序，所以基于事件的网络驱动框架<code>ae.h/ae.c</code>,<code>ae_epoll.c</code>,<code>ae_evport.c</code>,<code>ae_kqueue.c</code>,<code>ae_select.c</code></p>
+</li>
+<li><p>底层<code>tcp</code>网络通信<code>anet.h/anet.c</code></p>
+</li>
+<li><p><code>客户端</code>实现<code>networking.c</code></p>
+</li>
+</ul>
+<h3 id="数据库数据类型和操作"><a href="#数据库数据类型和操作" class="headerlink" title="数据库数据类型和操作"></a>数据库数据类型和操作</h3><h4 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h4><table>
+<thead>
+<tr>
+<th>底层结构</th>
+<th>对应数据类型</th>
+<th>对应源文件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SDS</td>
+<td>String</td>
+<td>sds.h/sds.c/sdsalloc.h</td>
+</tr>
+<tr>
+<td>双向链表</td>
+<td>List</td>
+<td>adlist.h/adlist.c</td>
+</tr>
+<tr>
+<td>压缩列表</td>
+<td>List、Hash、Sorted Set</td>
+<td>ziplist.h/ziplist.c</td>
+</tr>
+<tr>
+<td>QuickList</td>
+<td>List、Hash、Sorted Set</td>
+<td>quicklist.h/quicklist.c</td>
+</tr>
+<tr>
+<td>整数列表</td>
+<td>Set</td>
+<td>intset.h/intset.c</td>
+</tr>
+<tr>
+<td>zipmap</td>
+<td>Hash</td>
+<td>zipmap.h/zipmap.c</td>
+</tr>
+<tr>
+<td>哈希表</td>
+<td>Hash</td>
+<td>dict.h/dict.c</td>
+</tr>
+<tr>
+<td>HyperLoglog</td>
+<td>HyperLogLog</td>
+<td>hyperloglog.c</td>
+</tr>
+<tr>
+<td>GetHash</td>
+<td>Get</td>
+<td>geo.h/get.c gethash.h/gethash.c geohash_helper.h/geohash_helper.c</td>
+</tr>
+<tr>
+<td>位图</td>
+<td>位图</td>
+<td>bitops.c</td>
+</tr>
+<tr>
+<td>Stream</td>
+<td>时序数据</td>
+<td>stream.h/stream.c</td>
+</tr>
+</tbody></table>
+<h4 id="数据操作"><a href="#数据操作" class="headerlink" title="数据操作"></a>数据操作</h4><ul>
+<li>对数据库键值对的操作<code>db.c</code></li>
+<li>内存分配，封装<code>tcmalloc</code>和<code>jemalloc</code>到<code>zmalloc.h/zmalloc.c</code></li>
+<li>内存回收，过期key和过期策略<code>expire.c</code>，异步删除<code>lazyfree.c</code></li>
+<li>数据替换的<code>LRU</code>和<code>LFU</code>算法<code>evict.c</code></li>
+</ul>
+<h3 id="高可用和高可扩展"><a href="#高可用和高可扩展" class="headerlink" title="高可用和高可扩展"></a>高可用和高可扩展</h3><h4 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h4><p><code>内存快照rdb</code>和<code>aof</code>的实现<code>rdb.h/rdb.c</code>和<code>aof.c</code>以及对应文件的完整性检测<code>redis-check-rdb.c</code>和<code>redis-check-aof.c</code></p>
+<h4 id="主从复制功能实现"><a href="#主从复制功能实现" class="headerlink" title="主从复制功能实现"></a>主从复制功能实现</h4><p><code>主从复制</code>在<code>replication.c</code>中，所依赖的哨兵在<code>sentinel.c</code>中，<code>集群</code>在<code>cluster.h/cluster.c</code>中。</p>
+<h3 id="辅助功能"><a href="#辅助功能" class="headerlink" title="辅助功能"></a>辅助功能</h3><p>运维分析不同操作延迟来源的<code>latency.h/latency.c</code>文件，慢日志<code>slowlog.h/slowlog.c</code>,性能测试<code>redis-benchmark.c</code></p>
 <h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>熟悉项目的目录结构可以帮助更好的阅读源码，一个中大型项目一般包含上千个源码文件，符合规范的项目会按照功能的不同把源码放在不同的文件目录中，通过了解项目的目录组织结构，可以对项目有一个大概的认知，如果同时提前对项目的模块和功能点有一定的了解更能事半功倍。</p>
-
+<p>课程中关于数据结构和对应的数据类型可能有缺失，这里使用下面的留言记录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">数据类型：</span><br><span class="line">- String（t_string.c、sds.c、bitops.c）</span><br><span class="line">- List（t_list.c、ziplist.c）</span><br><span class="line">- Hash（t_hash.c、ziplist.c、dict.c）</span><br><span class="line">- Set（t_set.c、intset.c）</span><br><span class="line">- Sorted Set（t_zset.c、ziplist.c、dict.c）</span><br><span class="line">- HyperLogLog（hyperloglog.c）</span><br><span class="line">- Geo（geo.c、geohash.c、geohash_helper.c）</span><br><span class="line">- Stream（t_stream.c、rax.c、listpack.c）</span><br><span class="line"></span><br><span class="line">全局：</span><br><span class="line">- Server（server.c、anet.c）</span><br><span class="line">- Object（object.c）</span><br><span class="line">- 键值对（db.c）</span><br><span class="line">- 事件驱动（ae.c、ae_epoll.c、ae_kqueue.c、ae_evport.c、ae_select.c、networking.c）</span><br><span class="line">- 内存回收（expire.c、lazyfree.c）</span><br><span class="line">- 数据替换（evict.c）</span><br><span class="line">- 后台线程（bio.c）</span><br><span class="line">- 事务（multi.c）</span><br><span class="line">- PubSub（pubsub.c）</span><br><span class="line">- 内存分配（zmalloc.c）</span><br><span class="line">- 双向链表（adlist.c）</span><br><span class="line"></span><br><span class="line">高可用&amp;集群：</span><br><span class="line">- 持久化：RDB（rdb.c、redis-check-rdb.c)、AOF（aof.c、redis-check-aof.c）</span><br><span class="line">- 主从复制（replication.c）</span><br><span class="line">- 哨兵（sentinel.c）</span><br><span class="line">- 集群（cluster.c）</span><br><span class="line"></span><br><span class="line">辅助功能：</span><br><span class="line">- 延迟统计（latency.c）</span><br><span class="line">- 慢日志（slowlog.c）</span><br><span class="line">- 通知（notify.c）</span><br><span class="line">- 基准性能（redis-benchmark.c）</span><br></pre></td></tr></table></figure>
       
     </div>
 
