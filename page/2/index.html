@@ -187,6 +187,101 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/27/Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_me.png">
+      <meta itemprop="name" content="onno">
+      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="onno">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/27/Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/" class="post-title-link" itemprop="url">Mysql Int类型的取值范围</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-09-27 18:08:21" itemprop="dateCreated datePublished" datetime="2021-09-27T18:08:21+08:00">2021-09-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-02 16:35:35" itemprop="dateModified" datetime="2021-12-02T16:35:35+08:00">2021-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">计算机组成原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="悲催时刻"><a href="#悲催时刻" class="headerlink" title="悲催时刻"></a>悲催时刻</h1><p>面试的时候，被问到 MySQL Int 类型的取值范围，一开始寻思问的不会是宽度的设置吧，最后真的竟然是问取值范围，MySQL的Int是32位的，那32位的Int类型的取值范围是多少呢？一时间我竟然有些恍惚，每次看到int8的取值范围我们的肌肉记忆就会告诉我们是<code>[-128,127]</code>，但是为啥是这个取值范围呢？我掐指一算，不应该是<code>[-127,127](注意，这个是错误的！！！)</code>吗？<br>第一位是符号位置，所以<code>[0111,1111]</code>是<code>127</code>，<code>[1111,1111]</code>是<code>-127</code>岂不是爽歪歪？结果正确的答案是<code>[-128,127]</code>，我就不知道你怎么给老子存<code>-128</code></p>
+<p>结果可想而知，我又挂了</p>
+<h1 id="亡羊补牢"><a href="#亡羊补牢" class="headerlink" title="亡羊补牢"></a>亡羊补牢</h1><p>为了熟练掌握这个基础知识，我又又又一次开始Google，终于有一定的理解，计算机里带符号类型的整数都是使用一种称为<code>补码</code>的方式存储的，为啥呢？因为CPU内部的哪些乱七八糟的门电路什么的，费老大劲才能组成一个<code>全加器</code>用来对两个数进行加法运算，结果你给老子来个减法？所以为了减少复杂数字电路的设计，复用<code>全加器</code>，出现了<code>原码</code>、<code>反码</code>和<code>补码</code>的概念，要有一个概念就是符号整数在内存里都是补码存储的，便于运算.</p>
+<h2 id="原码、反码和补码"><a href="#原码、反码和补码" class="headerlink" title="原码、反码和补码"></a>原码、反码和补码</h2><p><code>原码</code> 就是我们学习和理解的符号整形的二进制表示方式，例如<code>-3</code>用<code>[1000,0011]</code>表示，<code>+3</code>用<code>[0000,0011]</code>表示</p>
+<p><code>反码</code> 正数的反码和原码一样，负数的反码是<code>符号为不变,其余位取反</code>，所以 <code>+3</code> 的反码还是<code>[0000,0011]</code>，<code>-3</code>的反码是[1111,1100],</p>
+<p><code>补码</code> 正数的补码和原码一样，负数的补码是<code>符号为不变,其余位取反后+1</code>，所以 <code>+3</code> 的补码还是<code>[0000,0011]</code>，<code>-3</code>的补码是[1111,1101]</p>
+<h2 id="CPU-符号整数的加减法的计算"><a href="#CPU-符号整数的加减法的计算" class="headerlink" title="CPU 符号整数的加减法的计算"></a>CPU 符号整数的加减法的计算</h2><p>上面我们说过，为了复用<code>加法器</code>，我们需要把<code>减法</code>干掉，恰好我们有一个定理是<code>1-1 = 1+(-1)</code>，哈哈哈，怎么样，这不就把减法<br>干掉了吗？我们来试试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](原) + [1000,0011](原) = [1000,0110](原) = -6 </span><br></pre></td></tr></table></figure>
+<p>错的离谱，符号为参与运算，错的不能再错了，难道再设计个电路专门处理符号位？这也太蠢了，我们用新技能<code>反码</code>试试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](反) + [1111,1100](反) =  [1111,1111](反) = [1000,0000](原) = -0 </span><br></pre></td></tr></table></figure>
+
+<p>bingo! 答对了，但是 [1000,0000] 是 <code>-0</code> 难道[0000,0000]是<code>+0</code>吗？<code>+0</code>和<code>-0</code>怕不是不相等吧，所以我们再用另一个新技能<code>补码试试</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](补) + [1111,1101](补) = &#123;1&#125;[0000,0000](补) = [1000,0000](原) = 0 </span><br></pre></td></tr></table></figure>
+<p><code>补码</code>有点神奇啊，竟然溢出了一个位置，咋办，难不成把前面哪个数据的内存给偷摸的改了? 其实不是，加法器会丢弃溢出的位置，符号为的新值作为符号的判定，所以上面是[0000,0000] 是 0</p>
+<p>这个例子不好，我们换一个再试一次</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-127 - 1 = (-127) + (-1) = [1000,0001](补) + [1111,1111](补) = &#123;1&#125;[1000,0000](补) = [1000,0000](原) </span><br></pre></td></tr></table></figure>
+<p>点子不好，咋又溢出了，我们把它按照惯丢掉，变成了<code>[1000,0000]</code>，你大爷的，<code>-0</code>你怎么又来了，结果不应该是<code>-128</code>吗，所以大家一生气，让[1000,0000]就代表<code>-128</code>吧，所以在<code>补码</code>表示中[1000,0000]就代表了(-128),原先的<code>-0</code>没了，但是<code>+0</code>还在,所以Int(8)的取值范围就是[1000,0000] 到 [0111,1111] 也就是<code>[-128,127]</code></p>
+<p>上面的都是点子背，我们弄一个正常的来算一下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">12 - 9 = [0000,1100](补) + [1111,0111](补) = &#123;1&#125;[0000,0011](补) = [0000,0011](原) = 3</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>也是正确的</p>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>所以我们得到一个规律，一个符号整数的取值范围和他所占用的位数的n的关系为 <code>[-(2^(n-1)),2^(n-1)-1]</code>, MySQL Int 类型的位数是32位置，所以MySQL Int的取值范围是 <code>[-(2^(32-1)),2^(32-1)-1]</code> 是 <code>[-2 147 483 648,2 147 483 647]</code></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
     <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/26/%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E8%90%A5-%E4%BA%94%E6%AF%92%E5%88%B7%E9%A2%98%E6%B3%95/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -400,14 +495,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
