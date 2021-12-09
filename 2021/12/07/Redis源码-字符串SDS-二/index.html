@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"onno.ink","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13  上一课从两个方面从整体层面了解了Redis源码文件结构和模块组成，接下来的学习会按照模块的划分来进行学习，首先学习的是数据库数据类型和操作的内容。 我们常用的字符串是什么首先说一下我们了解的字符串这种类型，字符串在我使用PHP语言中，使用单">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis源码:字符串SDS(二)">
+<meta property="og:url" content="https://onno.ink/2021/12/07/Redis%E6%BA%90%E7%A0%81-%E5%AD%97%E7%AC%A6%E4%B8%B2SDS-%E4%BA%8C/index.html">
+<meta property="og:site_name" content="onno">
+<meta property="og:description" content="博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13  上一课从两个方面从整体层面了解了Redis源码文件结构和模块组成，接下来的学习会按照模块的划分来进行学习，首先学习的是数据库数据类型和操作的内容。 我们常用的字符串是什么首先说一下我们了解的字符串这种类型，字符串在我使用PHP语言中，使用单">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-12-07T07:28:58.000Z">
+<meta property="article:modified_time" content="2021-12-09T06:15:19.637Z">
+<meta property="article:author" content="onno">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://onno.ink/2021/12/07/Redis%E6%BA%90%E7%A0%81-%E5%AD%97%E7%AC%A6%E4%B8%B2SDS-%E4%BA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh'
+  };
+</script>
+
+  <title>Redis源码:字符串SDS(二) | onno</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">onno</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">onno 求索笔记 </p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/07/Redis%E6%BA%90%E7%A0%81-%E5%AD%97%E7%AC%A6%E4%B8%B2SDS-%E4%BA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_me.png">
+      <meta itemprop="name" content="onno">
+      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="onno">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis源码:字符串SDS(二)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-12-07 15:28:58" itemprop="dateCreated datePublished" datetime="2021-12-07T15:28:58+08:00">2021-12-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-09 14:15:19" itemprop="dateModified" datetime="2021-12-09T14:15:19+08:00">2021-12-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">Redis源码阅读</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13</p>
+</blockquote>
+<p>上一课从两个方面从整体层面了解了Redis源码文件结构和模块组成，接下来的学习会按照模块的划分来进行学习，<br>首先学习的是<code>数据库数据类型和操作</code>的内容。</p>
+<h3 id="我们常用的字符串是什么"><a href="#我们常用的字符串是什么" class="headerlink" title="我们常用的字符串是什么"></a>我们常用的字符串是什么</h3><p>首先说一下我们了解的字符串这种类型，字符串在我使用PHP语言中，使用单引号<code>&#39;</code>或者双引号<code>&quot;</code>选中的范围内的值，在Go语言中使用双引号<code>&quot;</code>进行包围。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// PHP</span><br><span class="line">$a = &quot;nihao&quot;;</span><br><span class="line"></span><br><span class="line">// Go </span><br><span class="line">a := &quot;xxxxxx&quot;</span><br></pre></td></tr></table></figure>
+<p>在Go中和PHP中都有很多针对字符串进行操作的函数，例如<code>获取长度</code>,<code>拼接</code>,<code>比较</code>等。</p>
+<h3 id="Redis字符串有什么要求"><a href="#Redis字符串有什么要求" class="headerlink" title="Redis字符串有什么要求"></a>Redis字符串有什么要求</h3><p>字符串作为一个Redis支持的数据类型，对字符串的要求主要有</p>
+<ol>
+<li>丰富高效的字符串操作</li>
+<li>二进制安全，能保存任意的二进制</li>
+<li>尽可能节省内存开销</li>
+</ol>
+<h3 id="为什么不用C语言自带的字符串？"><a href="#为什么不用C语言自带的字符串？" class="headerlink" title="为什么不用C语言自带的字符串？"></a>为什么不用C语言自带的字符串？</h3><p>Redis使用<code>C语言</code>开发，<code>C语言</code>中字符串使用 <code>char*</code> 字符数组来表示字符串，同时<code>C语言</code>也自带了很多对字符串的操作函数。为什么不使用<code>C语言</code>子弹字符串，而要重新设计一个<code>SDS</code>字符串呢？</p>
+<h4 id="不是二进制安全的"><a href="#不是二进制安全的" class="headerlink" title="不是二进制安全的"></a>不是二进制安全的</h4><p>C语言自带的字符串不是二进制安全的，不能够用来保存二进制数据，C中自带的字符串中用<code>\0</code>结尾，无法保存自带<code>\0</code>的二进制数据</p>
+<h4 id="字符串操作复杂度高"><a href="#字符串操作复杂度高" class="headerlink" title="字符串操作复杂度高"></a>字符串操作复杂度高</h4><h5 id="内存的频繁分配和释放"><a href="#内存的频繁分配和释放" class="headerlink" title="内存的频繁分配和释放"></a>内存的频繁分配和释放</h5><p>分配在堆上的字符串需要需要频繁的分配和释放内存，每次进行追加字符串都需要遍历字符串，然后分配内存</p>
+<h5 id="操作函数不高效"><a href="#操作函数不高效" class="headerlink" title="操作函数不高效"></a>操作函数不高效</h5><p>字符串操作不够高效，例如<code>strlen</code>之类的操作需要遍历字符串，时间复杂度O(n)</p>
+<h3 id="SDS设计哲学"><a href="#SDS设计哲学" class="headerlink" title="SDS设计哲学"></a>SDS设计哲学</h3><p>SDS是Redis设计的字符串类型，专门设计了SDS结构体,为了节省内存<code>SDS结构体</code>包含多种类型，例如<code>sdshdr5(不再使用)</code>,<code>sdshdr8</code>,<code>sdshdr16</code>,<code>sdshdr32</code>,<code>sdshdr64</code>,不同类型的sds结构体区别是记录字符串长度的无符号整型的位数的不同，例如<code>sdshdr16</code>的alloc是一个<code>uint16</code>的无符号整数，所以能表达的最数字是<code>2^16 - 1</code>,所以<code>sdshdr16</code>能存储的最大的字符串的长度为<code>2^16 - 1</code>。</p>
+<blockquote>
+<p>经常有人问Redis最大能存多大，官方文档表达是最大是512M，但是<code>sdshdr64</code>明显能够表达更长，估计是考虑32位主机无法使用<code>sdshdr64</code></p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">struct __attribute__ ((__packed__)) sdshdr##T &#123;</span><br><span class="line">    uint##T_t len; /* used */</span><br><span class="line">    uint##T_t alloc; /* excluding the header and null terminator */</span><br><span class="line">    unsigned char flags; /* 3 lsb of type, 5 unused bits */</span><br><span class="line">    char buf[];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>attribute</strong> ((<strong>packed</strong>))让内存采用紧凑的方式分配内存， 这样不会按照8字节对齐，可以防止内存对齐带来的内存浪费。</p>
+</blockquote>
+<p>上面结构体包含<code>当前字符串长度len(不包含\0)</code>,<code>当前sds字符串分配的长度(alloc)</code>,<code>当前字符串的类型flags</code>,<code>字符串数组</code></p>
+<p>同时Redis还给<code>char*</code>起了一个新的别名<code>sds</code>，同时创建了很多对sds进行操作的函数，Redis虽然创建了一个新的数据结构，但是创建sds返回的仍然是结构体里的buf字节数组，随意C语言的一些字符串操作依然可以使用</p>
+<h3 id="SDS操作效率"><a href="#SDS操作效率" class="headerlink" title="SDS操作效率"></a>SDS操作效率</h3><p>先看常规的字符串信息获取，通过使用sds，字符串的<code>长度函数</code>函数可以直接从头部信息的<code>len</code>获取，时间复杂度从O(n)变为了O(1)</p>
+<p>看一个字符串拼接操作，如果使用C语言的字符串，首先要以O(n)的时间复杂度遍历字符串获取长度，然后再为字符串申请额外空间，再遍历要加入的字符串，拼接到目标字符串的尾部。</p>
+<p>但是<code>sdscatlen</code>函数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">sds sdscatlen(sds s, const void *t, size_t len) &#123;</span><br><span class="line">    //获取目标字符串s的当前长度</span><br><span class="line">    size_t curlen = sdslen(s);</span><br><span class="line">    //根据要追加的长度len和目标字符串s的现有长度，判断是否要增加新的空间</span><br><span class="line">    s = sdsMakeRoomFor(s,len);</span><br><span class="line">    if (s == NULL) return NULL;</span><br><span class="line">    //将源字符串t中len长度的数据拷贝到目标字符串结尾</span><br><span class="line">    memcpy(s+curlen, t, len);</span><br><span class="line">    //设置目标字符串的最新长度：拷贝前长度curlen加上拷贝长度</span><br><span class="line">    sdssetlen(s, curlen+len);</span><br><span class="line">    //拷贝后，在目标字符串结尾加上\0</span><br><span class="line">    s[curlen+len] = &#x27;\0&#x27;;</span><br><span class="line">    return s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>首先，获取目标字符串的当前长度，并调用 <code>sdsMakeRoomFor</code> 函数，根据当前长度和要追加的长度，判断是否要给目标字符串新增空间。这一步主要是保证，目标字符串有足够的空间接收追加的字符串。</li>
+<li>其次，在保证了目标字符串的空间足够后，将源字符串中指定长度 len 的数据追加到目标字符串。</li>
+<li>最后，设置目标字符串的最新长度。</li>
+</ul>
+<p>省去了遍历字符串的操作，同时通过额外字段存储<code>len</code>和<code>alloc</code>，可以提前分配部分空间，免去每次分配内存的复杂工作</p>
+<h4 id="一个知识点，SDS的扩容的规则-内存预先分配"><a href="#一个知识点，SDS的扩容的规则-内存预先分配" class="headerlink" title="一个知识点，SDS的扩容的规则: 内存预先分配"></a>一个知识点，SDS的扩容的规则: 内存预先分配</h4><p><code>sdsMakeRoomFor</code>方法决定了字符串的扩容规则，redis不单单为</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#define SDS_MAX_PREALLOC (1024*1024)</span><br><span class="line"></span><br><span class="line">if (newlen &lt; SDS_MAX_PREALLOC)</span><br><span class="line">    newlen *= 2;</span><br><span class="line">else</span><br><span class="line">    newlen += SDS_MAX_PREALLOC;</span><br></pre></td></tr></table></figure>
+<p>总结下来就是</p>
+<ul>
+<li>如果新的字符串的小于1M，则扩容为新的字符串的2倍大小</li>
+<li>如果新的字符串的大于等于1M，则扩容为新的字符串基础上+1M</li>
+</ul>
+<h3 id="其它知识点"><a href="#其它知识点" class="headerlink" title="其它知识点"></a>其它知识点</h3><ol>
+<li>Redis所有key都是sds</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"># Redis</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/12/06/Redis%E5%AE%9E%E6%88%98-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E7%8E%B0/" rel="prev" title="Redis实战-分布式锁的原理和实现">
+      <i class="fa fa-chevron-left"></i> Redis实战-分布式锁的原理和实现
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%88%91%E4%BB%AC%E5%B8%B8%E7%94%A8%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.</span> <span class="nav-text">我们常用的字符串是什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%9C%89%E4%BB%80%E4%B9%88%E8%A6%81%E6%B1%82"><span class="nav-number">2.</span> <span class="nav-text">Redis字符串有什么要求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%94%A8C%E8%AF%AD%E8%A8%80%E8%87%AA%E5%B8%A6%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2%EF%BC%9F"><span class="nav-number">3.</span> <span class="nav-text">为什么不用C语言自带的字符串？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E6%98%AF%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8%E7%9A%84"><span class="nav-number">3.1.</span> <span class="nav-text">不是二进制安全的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%93%8D%E4%BD%9C%E5%A4%8D%E6%9D%82%E5%BA%A6%E9%AB%98"><span class="nav-number">3.2.</span> <span class="nav-text">字符串操作复杂度高</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E7%9A%84%E9%A2%91%E7%B9%81%E5%88%86%E9%85%8D%E5%92%8C%E9%87%8A%E6%94%BE"><span class="nav-number">3.2.1.</span> <span class="nav-text">内存的频繁分配和释放</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E5%87%BD%E6%95%B0%E4%B8%8D%E9%AB%98%E6%95%88"><span class="nav-number">3.2.2.</span> <span class="nav-text">操作函数不高效</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SDS%E8%AE%BE%E8%AE%A1%E5%93%B2%E5%AD%A6"><span class="nav-number">4.</span> <span class="nav-text">SDS设计哲学</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SDS%E6%93%8D%E4%BD%9C%E6%95%88%E7%8E%87"><span class="nav-number">5.</span> <span class="nav-text">SDS操作效率</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E7%9F%A5%E8%AF%86%E7%82%B9%EF%BC%8CSDS%E7%9A%84%E6%89%A9%E5%AE%B9%E7%9A%84%E8%A7%84%E5%88%99-%E5%86%85%E5%AD%98%E9%A2%84%E5%85%88%E5%88%86%E9%85%8D"><span class="nav-number">5.1.</span> <span class="nav-text">一个知识点，SDS的扩容的规则: 内存预先分配</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="nav-number">6.</span> <span class="nav-text">其它知识点</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="onno"
+      src="/images/avatar_me.png">
+  <p class="site-author-name" itemprop="name">onno</p>
+  <div class="site-description" itemprop="description">onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/onnoink" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;onnoink" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lion0418@163.com" title="E-Mail → mailto:lion0418@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">路漫漫其修远兮，吾将上下而求索</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
