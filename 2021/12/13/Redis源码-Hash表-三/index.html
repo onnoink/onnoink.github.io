@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"onno.ink","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13  上节课学习了Redis简单动态字符串SDS，我们提到Redis数据库键值对的键都是SDS类型，这个键值对结构就是今天要学的hash表数据结构。 哈希表 HashTable哈希表(HashTable)一般是一个数组结构，数组中每个元素是一个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis源码:Hash表(三)">
+<meta property="og:url" content="https://onno.ink/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/index.html">
+<meta property="og:site_name" content="onno">
+<meta property="og:description" content="博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13  上节课学习了Redis简单动态字符串SDS，我们提到Redis数据库键值对的键都是SDS类型，这个键值对结构就是今天要学的hash表数据结构。 哈希表 HashTable哈希表(HashTable)一般是一个数组结构，数组中每个元素是一个">
+<meta property="og:locale">
+<meta property="og:image" content="https://onno.ink/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/08ac157a8fbf4d22f8a5217bfea79a2f.jpeg">
+<meta property="article:published_time" content="2021-12-13T08:47:17.000Z">
+<meta property="article:modified_time" content="2021-12-14T08:28:30.847Z">
+<meta property="article:author" content="onno">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://onno.ink/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/08ac157a8fbf4d22f8a5217bfea79a2f.jpeg">
+
+<link rel="canonical" href="https://onno.ink/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh'
+  };
+</script>
+
+  <title>Redis源码:Hash表(三) | onno</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">onno</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">onno 求索笔记 </p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_me.png">
+      <meta itemprop="name" content="onno">
+      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="onno">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis源码:Hash表(三)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-12-13 16:47:17" itemprop="dateCreated datePublished" datetime="2021-12-13T16:47:17+08:00">2021-12-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-14 16:28:30" itemprop="dateModified" datetime="2021-12-14T16:28:30+08:00">2021-12-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">Redis源码阅读</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13</p>
+</blockquote>
+<p>上节课学习了Redis<code>简单动态字符串SDS</code>，我们提到Redis数据库键值对的键都是SDS类型，这个键值对结构就是今天要学的hash表数据结构。</p>
+<h3 id="哈希表-HashTable"><a href="#哈希表-HashTable" class="headerlink" title="哈希表 HashTable"></a>哈希表 HashTable</h3><p><code>哈希表(HashTable)</code>一般是一个数组结构，数组中每个元素是一个<code>哈希桶(bucket)</code>,要存入<code>哈希表</code>的数据通过<code>hash算法</code>得到一个<code>整数哈希值(HashCode)</code>,然后对<code>数组元素个数</code>进行<code>取模</code>运算得到元素在<code>哈希表</code>中的位置，也就是所对应的<code>哈希桶(bucket)</code>的位置,存入元素。</p>
+<p><img src="/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/08ac157a8fbf4d22f8a5217bfea79a2f.jpeg" alt="hashtable"></p>
+<h4 id="哈希表的优势"><a href="#哈希表的优势" class="headerlink" title="哈希表的优势"></a>哈希表的优势</h4><p>哈希表基于数组结构，数组结构有一个优势是随机读取指定索引位置的时间复杂度是O(1),所以基于在数组中随机读取指定位置的元素的时间复杂度是O(1)，所以键值对查找是哈希表的优势。</p>
+<h4 id="哈希函数"><a href="#哈希函数" class="headerlink" title="哈希函数"></a>哈希函数</h4><p><code>哈希函数</code>对要存入哈希表的元素的<code>key</code>进行<code>hash计算</code>后，生成对应的<code>hashcode</code>,从哈希表的结构我们看出，如果不同元素得到的<code>hashcode</code>比较<code>分散</code>，这样元素就能分散的插入到不同的<code>bucket</code>内，但是如果哈希函数的产生的<code>hashcode</code>比较集中，就会导致元素堆积在<code>部分bucket</code>范围内，造成<code>hash表</code>元素分布不均匀，产生<code>哈希冲突</code>的可能性大大增加。</p>
+<h4 id="哈希冲突"><a href="#哈希冲突" class="headerlink" title="哈希冲突"></a>哈希冲突</h4><p>因为哈希表是把<code>无限的元素映射到有限的空间内</code>，所以必然会出现多个元素映射到同一个位置的情况，就是<code>hash冲突</code>,也就是不同的元素通过<code>hash函数</code>得到的<code>hash值</code>经过取模运算后，最终可能指向同一个<code>bucket</code>。</p>
+<p>解决<code>hash冲突</code>的常用方法有很多，<code>链表法</code>和<code>开放寻址法</code>,<code>再hash法</code>,<code>建立公共溢出区</code>等</p>
+<h5 id="开放寻址法"><a href="#开放寻址法" class="headerlink" title="开放寻址法"></a>开放寻址法</h5><p>开放寻址法，插入新元素产生hash冲突的时候，按顺序往后查找<code>bucket</code>直到找到一个<code>bucket</code>为空的时候，把元素存入该位置，同样查找元素的时候，对比如果key和查找不一致，则按顺序往后查找直到找到一个元素<code>key</code>的要查找的元素一样，则返回。这种方法在<code>hash负载</code>比较高的时候，最差的时间复杂度可能为O(n),已经很少被人使用了。</p>
+<h5 id="链表法"><a href="#链表法" class="headerlink" title="链表法"></a>链表法</h5><p><code>hash表</code>的<code>bucket</code>存储的不再是单个元素，而是<code>链表</code>，产生<code>hash冲突</code>的元素通过链表链接在同一个<code>bucket</code>内，这样插入新的元素的时候，如果当前<code>bucket</code>已经存在元素了，则把要插入的元素加入到链表中。</p>
+<h5 id="负载因子"><a href="#负载因子" class="headerlink" title="负载因子"></a>负载因子</h5><p>负载因子是评价哈希表当前负载情况的一个标准，算法是用<code>hash表内元素的总数</code>/<code>哈希表哈希桶的个数</code>，负载因子代表哈希表当前的负载程度，负载因子越大，产生哈希冲突的可能性越大</p>
+<h3 id="Redis的哈希表"><a href="#Redis的哈希表" class="headerlink" title="Redis的哈希表"></a>Redis的哈希表</h3><p>redis和哈希表相关的内容在<code>dict.h</code>,<code>dict.c</code>文件中,redis使用<code>dictht</code>数据结构代表哈希表数据结构</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dictht &#123;</span><br><span class="line">    dictEntry **table; //二维数组</span><br><span class="line">    unsigned long size; //Hash表大小</span><br><span class="line">    unsigned long sizemask; // size掩码</span><br><span class="line">    unsigned long used; // 已经使用的大小</span><br><span class="line">&#125; dictht;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>哈希表中每一元素都是一个<code>dictEntry</code>数据结构，</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">typedef struct dictEntry &#123;</span><br><span class="line">    void *key;</span><br><span class="line">    union &#123;</span><br><span class="line">        void *val;</span><br><span class="line">        uint64_t u64;</span><br><span class="line">        int64_t s64;</span><br><span class="line">        double d;</span><br><span class="line">    &#125; v;</span><br><span class="line">    struct dictEntry *next;</span><br><span class="line">&#125; dictEntry;</span><br></pre></td></tr></table></figure>
+<p>看一看出<code>dictEntry</code>都有一个<code>next</code>指针，所以实际redis解决哈希冲突的方式是通过链表法解决。实际上为了实现哈希表的自动扩容，redis中的哈希表并不直接使用<code>dictht</code>而是使用<code>dict</code>这个数据结构。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dict &#123;</span><br><span class="line">    dictType *type; // 类型</span><br><span class="line">    void *privdata; // 私有数据，type函数的参数</span><br><span class="line">    dictht ht[2];   // 包含2个dictht的长度为2的数组</span><br><span class="line">    long rehashidx; // rehash时候当前进度，也就是当前rehash到了哪个bucket</span><br><span class="line">    unsigned long iterators; // 当前正在执行的迭代器的数量</span><br><span class="line">&#125; dict;</span><br></pre></td></tr></table></figure>
+<p>redis全局数据库也是一个<code>dict</code>结构，redis使用<code>dict</code>实现<code>渐进式rehash</code></p>
+<h4 id="渐进式rehash"><a href="#渐进式rehash" class="headerlink" title="渐进式rehash"></a>渐进式rehash</h4><p>上面讲过哈希冲突和负载因子，随着负载因子的增长，哈希表产生哈希冲突的概率越来越大，哈希表的查找元素效率越来月底，就需要对hash进行扩容，称之为<code>rehash</code>，常规的操作是申请一个新的数组，大小是<code>当前元素数量</code>的<code>2倍</code>大小,然后迁移旧的<code>哈希表</code>的数据，根据<code>新的哈希表</code>的<code>bucket数量</code>重新计算所在的<code>bucket的位置</code>并存入，如果一次性进行这些操作时间复杂度是O(n)。</p>
+<p>我们直到<code>redis是单线程</code>的高性能的键值数据库，如果在主线程中执行<code>rehash</code>操作，会阻塞主线程，所以redis采用特别的<code>渐进式rehash</code>进行数据迁移</p>
+<h5 id="触发渐进式rehash的条件"><a href="#触发渐进式rehash的条件" class="headerlink" title="触发渐进式rehash的条件"></a>触发渐进式rehash的条件</h5><p>redis在什么情况下会触发渐进式rehash呢？上面其实我们说过，哈希表进行rehash和负载因子有关，我们看<code>_dictExpandIfNeeded</code>方法</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">static int _dictExpandIfNeeded(dict *d)</span><br><span class="line">&#123;</span><br><span class="line">    /* Incremental rehashing already in progress. Return. */</span><br><span class="line">    if (dictIsRehashing(d)) return DICT_OK;</span><br><span class="line"></span><br><span class="line">    /* If the hash table is empty expand it to the initial size. */</span><br><span class="line">    if (d-&gt;ht[0].size == 0) return dictExpand(d, DICT_HT_INITIAL_SIZE);</span><br><span class="line"></span><br><span class="line">    /* If we reached the 1:1 ratio, and we are allowed to resize the hash</span><br><span class="line">     * table (global setting) or we should avoid it but the ratio between</span><br><span class="line">     * elements/buckets is over the &quot;safe&quot; threshold, we resize doubling</span><br><span class="line">     * the number of buckets. */</span><br><span class="line">    if (d-&gt;ht[0].used &gt;= d-&gt;ht[0].size &amp;&amp;</span><br><span class="line">        (dict_can_resize ||</span><br><span class="line">         d-&gt;ht[0].used/d-&gt;ht[0].size &gt; dict_force_resize_ratio))</span><br><span class="line">    &#123;</span><br><span class="line">        return dictExpand(d, d-&gt;ht[0].used*2);</span><br><span class="line">    &#125;</span><br><span class="line">    return DICT_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面说明一个已经初始化的哈希表触发<code>rehash</code>的条件是</p>
+<ol>
+<li>负载因子 &gt;= 1  &amp;&amp;  dict_can_resize标志是 true</li>
+<li>负载因子 &gt; 5<br>如果<code>负载因子在1-5之间</code>，需要标志位<code>dict_can_resize</code>是<code>true</code>的时候可以进行，如果<code>负载因子&gt;5</code>,不用管标志位，强行进行。<br>上面控制<code>dict_can_resize</code>的函数分别是<code>dictEnableResize</code>和<code>dictDisableResize</code>，而调用这两个方法的函数在<code>server.m</code>里的<code>updateDictResizePolicy</code>方法<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">void updateDictResizePolicy(void) &#123;</span><br><span class="line">    if (server.rdb_child_pid == -1 &amp;&amp; server.aof_child_pid == -1)</span><br><span class="line">        dictEnableResize();</span><br><span class="line">    else</span><br><span class="line">        dictDisableResize();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+这个函数调用 dictEnableResize 函数启用扩容功能的条件是：当前没有 RDB 子进程，并且也没有 AOF 子进程，为避免父进程大量写时复制。</li>
+</ol>
+<p>通过<code>_dictExpandIfNeeded</code>函数可以触发哈希表的<code>rehash</code>操作，哪什么时候会调用<code>_dictExpandIfNeeded</code>函数呢？函数<code>_dictExpandIfNeeded</code>被<code>_dictKeyIndex</code>函数调用，而该函数又被<code>dictAddRaw</code>调用,<code>dictAddRaw</code>又被<code>dictAdd</code>,<code>dictReplace</code>,<code>dictAddorFind</code>调用</p>
+<ul>
+<li>dictAdd：用来往 Hash 表中添加一个键值对。</li>
+<li>dictRelace：用来往 Hash 表中添加一个键值对，或者键值对存在时，修改键值对。</li>
+<li>dictAddorFind：直接调用 dictAddRaw。</li>
+</ul>
+<p>所以在对hash表进行元素的<code>增加</code>和<code>修改</code>会判断释放需要触发<code>rehash</code></p>
+<h5 id="扩容多大"><a href="#扩容多大" class="headerlink" title="扩容多大"></a>扩容多大</h5><p>扩容函是<code>dictExpand</code>但是<code>_dictExpandIfNeeded</code>调用<code>dictExpand</code>的时候传入的参数是<code>d-&gt;ht[0].used*2</code>,最终通过<code>_dictNextPower</code>处理后得到扩展后的值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#define DICT_HT_INITIAL_SIZE     4</span><br><span class="line">/* Our hash table capability is a power of two */</span><br><span class="line">static unsigned long _dictNextPower(unsigned long size)</span><br><span class="line">&#123;</span><br><span class="line">    unsigned long i = DICT_HT_INITIAL_SIZE;</span><br><span class="line"></span><br><span class="line">    if (size &gt;= LONG_MAX) return LONG_MAX + 1LU;</span><br><span class="line">    while(1) &#123;</span><br><span class="line">        if (i &gt;= size)</span><br><span class="line">            return i;</span><br><span class="line">        i *= 2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以扩容的容量是 <code>x &gt;= d-&gt;ht[0].used*2 &amp;&amp;  x是2的n次方</code> 翻译过来就是<code>容量是</code>最接近<code>当前使用量 * 2</code>的<code>2的n次方</code>，并且<code>容量</code> &gt; 当前使用量 * 2</p>
+<h5 id="如何进行渐进式rehash"><a href="#如何进行渐进式rehash" class="headerlink" title="如何进行渐进式rehash"></a>如何进行渐进式rehash</h5><p>redis进行rehash主要有两个方法</p>
+<ul>
+<li><code>dictRehash</code> 迁移哈希表的n个<code>bucket</code></li>
+<li><code>_dictRehashStep</code> 迁移哈希表的1个<code>bucket</code></li>
+</ul>
+<p><code>_dictRehashStep</code>实际会调用<code>dictRehash</code>函数，只不过传入的<code>bucket</code>个数的参数是<code>1</code></p>
+<p><code>dictRehash</code>会从<code>dict</code>的<code>rehashidx</code>属性对应的位置开始，迁移<code>n</code>个<code>非空bucket</code>内的所有元素到新的哈希表内，每次迁移后都会判断旧的哈希表的使用量是否为<code>0</code>如果为<code>0</code>则会用<code>ht[1]</code>的哈希表替换<code>ht[0]</code>的哈希表，重制ht[1]，并把<code>rehashidx</code>改为<code>-1</code>完成本轮<code>rehash</code></p>
+<p><code>dictRehash</code>在进行迁移的过程中，可能会遇见多个连续的<code>空bucket</code>，有一个<code>empty_visits</code>递减计数器，每次遇见<code>空bucket</code>的时候<code>empty_visits</code>会减一，如果<code>empty_visits</code>减为0，则结束本轮rehash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">int dictRehash(dict *d, int n) &#123;</span><br><span class="line">    int empty_visits = n*10; /* Max number of empty buckets to visit. */</span><br><span class="line">    if (!dictIsRehashing(d)) return 0;</span><br><span class="line"></span><br><span class="line">    while(n-- &amp;&amp; d-&gt;ht[0].used != 0) &#123;</span><br><span class="line">        dictEntry *de, *nextde;</span><br><span class="line"></span><br><span class="line">        /* Note that rehashidx can&#x27;t overflow as we are sure there are more</span><br><span class="line">         * elements because ht[0].used != 0 */</span><br><span class="line">        assert(d-&gt;ht[0].size &gt; (unsigned long)d-&gt;rehashidx);</span><br><span class="line">        while(d-&gt;ht[0].table[d-&gt;rehashidx] == NULL) &#123;</span><br><span class="line">            d-&gt;rehashidx++;</span><br><span class="line">            if (--empty_visits == 0) return 1;</span><br><span class="line">        &#125;</span><br><span class="line">        de = d-&gt;ht[0].table[d-&gt;rehashidx];</span><br><span class="line">        /* Move all the keys in this bucket from the old to the new hash HT */</span><br><span class="line">        while(de) &#123;</span><br><span class="line">            uint64_t h;</span><br><span class="line"></span><br><span class="line">            nextde = de-&gt;next;</span><br><span class="line">            /* Get the index in the new hash table */</span><br><span class="line">            h = dictHashKey(d, de-&gt;key) &amp; d-&gt;ht[1].sizemask;</span><br><span class="line">            de-&gt;next = d-&gt;ht[1].table[h];</span><br><span class="line">            d-&gt;ht[1].table[h] = de;</span><br><span class="line">            d-&gt;ht[0].used--;</span><br><span class="line">            d-&gt;ht[1].used++;</span><br><span class="line">            de = nextde;</span><br><span class="line">        &#125;</span><br><span class="line">        d-&gt;ht[0].table[d-&gt;rehashidx] = NULL;</span><br><span class="line">        d-&gt;rehashidx++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /* Check if we already rehashed the whole table... */</span><br><span class="line">    if (d-&gt;ht[0].used == 0) &#123;</span><br><span class="line">        zfree(d-&gt;ht[0].table);</span><br><span class="line">        d-&gt;ht[0] = d-&gt;ht[1];</span><br><span class="line">        _dictReset(&amp;d-&gt;ht[1]);</span><br><span class="line">        d-&gt;rehashidx = -1;</span><br><span class="line">        return 0;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /* More to rehash... */</span><br><span class="line">    return 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>每次迁移一个<code>非空bucket</code>的<code>_dictRehashStep</code>被<code>dictAddRaw</code>，<code>dictGenericDelete</code>，<code>dictFind</code>，<code>dictGetRandomKey</code>，<code>dictGetSomeKeys</code>调用。<br><code>dictAddRaw</code> 和 <code>dictGenericDelete</code> 函数，分别对应了往 Redis 中增加和删除键值对，而后三个函数则对应了在 Redis 中进行查询操作。这样一来，每次迁移完一个 bucket，Hash 表就会执行正常的增删查请求操作，这就是在代码层面实现渐进式 rehash 的方法。</p>
+<p>另外除了每次<code>增删查</code>会进行渐进式<code>rehash</code>外，还有一个定时定时 rehash：如果 dict 一直没有操作，无法渐进式迁移数据，那主线程会默认每间隔 100ms 执行一次迁移操作。这里一次会以 100 个桶为基本单位迁移数据，并限制如果一次操作耗时超时 1ms 就结束本次任务，待下次再次触发迁移（详见 dict.c 的 dictRehashMilliseconds 函数）</p>
+<p>dict 在 rehash 期间，查询旧哈希表找不到结果，还需要在新哈希表查询一次，新的数据只会插入新的<code>哈希表</code>内，因为查找索引的<code>_dictKeyIndex</code>方法在<code>rehash</code>的时候会返回<code>ht[1]</code>的索引位置</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"># Redis</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/12/10/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E7%BC%93%E5%AD%98%E8%AF%A6%E8%A7%A3/" rel="prev" title="文件系统缓存详解">
+      <i class="fa fa-chevron-left"></i> 文件系统缓存详解
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E8%A1%A8-HashTable"><span class="nav-number">1.</span> <span class="nav-text">哈希表 HashTable</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E8%A1%A8%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">1.1.</span> <span class="nav-text">哈希表的优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E5%87%BD%E6%95%B0"><span class="nav-number">1.2.</span> <span class="nav-text">哈希函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E5%86%B2%E7%AA%81"><span class="nav-number">1.3.</span> <span class="nav-text">哈希冲突</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%BC%80%E6%94%BE%E5%AF%BB%E5%9D%80%E6%B3%95"><span class="nav-number">1.3.1.</span> <span class="nav-text">开放寻址法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E9%93%BE%E8%A1%A8%E6%B3%95"><span class="nav-number">1.3.2.</span> <span class="nav-text">链表法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9B%A0%E5%AD%90"><span class="nav-number">1.3.3.</span> <span class="nav-text">负载因子</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis%E7%9A%84%E5%93%88%E5%B8%8C%E8%A1%A8"><span class="nav-number">2.</span> <span class="nav-text">Redis的哈希表</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B8%90%E8%BF%9B%E5%BC%8Frehash"><span class="nav-number">2.1.</span> <span class="nav-text">渐进式rehash</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%A7%A6%E5%8F%91%E6%B8%90%E8%BF%9B%E5%BC%8Frehash%E7%9A%84%E6%9D%A1%E4%BB%B6"><span class="nav-number">2.1.1.</span> <span class="nav-text">触发渐进式rehash的条件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%89%A9%E5%AE%B9%E5%A4%9A%E5%A4%A7"><span class="nav-number">2.1.2.</span> <span class="nav-text">扩容多大</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E6%B8%90%E8%BF%9B%E5%BC%8Frehash"><span class="nav-number">2.1.3.</span> <span class="nav-text">如何进行渐进式rehash</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="onno"
+      src="/images/avatar_me.png">
+  <p class="site-author-name" itemprop="name">onno</p>
+  <div class="site-description" itemprop="description">onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/onnoink" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;onnoink" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lion0418@163.com" title="E-Mail → mailto:lion0418@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">路漫漫其修远兮，吾将上下而求索</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
