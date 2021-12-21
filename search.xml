@@ -4,6 +4,83 @@
   
     
     <entry>
+      <title>k8s:Pod(三)</title>
+      <link href="/2021/12/21/k8s-Pod-%E4%B8%89/"/>
+      <url>/2021/12/21/k8s-Pod-%E4%B8%89/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>k8s:容器技术(二)</title>
+      <link href="/2021/12/21/k8s-%E5%AE%B9%E5%99%A8%E6%8A%80%E6%9C%AF-%E4%BA%8C/"/>
+      <url>/2021/12/21/k8s-%E5%AE%B9%E5%99%A8%E6%8A%80%E6%9C%AF-%E4%BA%8C/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>k8s:容器历史(一)</title>
+      <link href="/2021/12/21/k8s-%E5%AE%B9%E5%99%A8%E5%8E%86%E5%8F%B2-%E4%B8%80/"/>
+      <url>/2021/12/21/k8s-%E5%AE%B9%E5%99%A8%E5%8E%86%E5%8F%B2-%E4%B8%80/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>Redis源码:RedisObject详解(四)</title>
+      <link href="/2021/12/20/Redis%E6%BA%90%E7%A0%81-RedisObject%E8%AF%A6%E8%A7%A3-%E5%9B%9B/"/>
+      <url>/2021/12/20/Redis%E6%BA%90%E7%A0%81-RedisObject%E8%AF%A6%E8%A7%A3-%E5%9B%9B/</url>
+      
+        <content type="html"><![CDATA[<blockquote><p>博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13</p></blockquote><p>前面两篇文章介绍了Redis的数据结构<code>dict</code>哈希表，以及<code>dict</code>使用的<code>渐进式rehash</code>和<code>SDS</code>简单动态字符串以及<code>SDS</code>对应的不同的节省内存的<code>SDS</code>数据结构。</p><p>Redis是一个<code>键值对</code>数据库，基于<code>dict</code>的哈希表来组织数据，<code>键</code>是<code>SDS</code>的数据类型，<code>值</code>是<code>dictEntry</code>数据类型，Redis拥有多种数据类型，包含</p><ul><li>字符串 STRING</li><li>列表 LIST</li><li>Hash HASH</li><li>集合 SET</li><li>有续集和 SORTED SET</li></ul><p>不同的数据类型的<code>底层数据结构</code>在数据元素和大小不同的情况下也是不同的，那么Redis基于<code>dictEntry</code>的数据结构,是如何指向不同的<code>底层数据结构</code>以及表示不同的<code>数据类型</code>的呢？</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dictEntry &#123;</span><br><span class="line">    void *key;</span><br><span class="line">    union &#123;</span><br><span class="line">        void *val;</span><br><span class="line">        uint64_t u64;</span><br><span class="line">        int64_t s64;</span><br><span class="line">        double d;</span><br><span class="line">    &#125; v;</span><br><span class="line">    struct dictEntry *next;</span><br><span class="line">&#125; dictEntry;</span><br></pre></td></tr></table></figure><p>上面的<code>dictEntry</code>包含一个<code>union</code>联合体，其中包含一个指针类型<code>*val</code>，在<code>Redis数据库</code>使用的<code>哈希表</code>中，指向<code>redisObject</code>结构体</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">typedef struct redisObject &#123;</span><br><span class="line">    unsigned type:4;</span><br><span class="line">    unsigned encoding:4;</span><br><span class="line">    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or</span><br><span class="line">                            * LFU data (least significant 8 bits frequency</span><br><span class="line">                            * and most significant 16 bits access time). */</span><br><span class="line">    int refcount;</span><br><span class="line">    void *ptr;</span><br><span class="line">&#125; robj;</span><br></pre></td></tr></table></figure><ul><li>type: redisObject 的数据类型，是应用程序在 Redis 中保存的数据类型，包括 String、List、Hash 等。</li><li>encoding: redisObject 的编码类型，是 Redis 内部实现各种数据类型所用的数据结构。</li><li>lru: redisObject 的 LRU 时间。</li><li>refcount: redisObject 的引用计数。</li><li>ptr: 指向值的指针</li></ul><blockquote><p>注意，上面定义中，<code>type 4bits</code>+<code>encoding 4bits</code>+<code>lru 24bits</code>=<code>32 bites</code>，也就是<code>4 bytes</code>，在实战篇会讲解为什么存很短的字符串也会占用很多空间的案例</p></blockquote><p>通过<code>type</code>属性，可以区分对应的<code>数据类型</code>，通过<code>encoding</code>属性可以区分<code>数据类型</code>的<code>底层结构</code></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_RAW 0     /* Raw representation */</span><br><span class="line">#define OBJ_ENCODING_INT 1     /* Encoded as integer */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br><span class="line">#define OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */</span><br><span class="line">#define OBJ_ENCODING_LINKEDLIST 4 /* No longer used: old list encoding. */</span><br><span class="line">#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */</span><br><span class="line">#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */</span><br><span class="line">#define OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */</span><br><span class="line">#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */</span><br><span class="line">#define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */</span><br><span class="line">#define OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */</span><br></pre></td></tr></table></figure><h4 id="STRING-类型"><a href="#STRING-类型" class="headerlink" title="STRING 类型"></a>STRING 类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_RAW 0     /* Raw representation */</span><br><span class="line">#define OBJ_ENCODING_INT 1     /* Encoded as integer */</span><br><span class="line">#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string </span><br></pre></td></tr></table></figure><h4 id="LIST-类型"><a href="#LIST-类型" class="headerlink" title="LIST 类型"></a>LIST 类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */</span><br></pre></td></tr></table></figure><h4 id="HASH类型"><a href="#HASH类型" class="headerlink" title="HASH类型"></a>HASH类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br></pre></td></tr></table></figure><h4 id="SET-类型"><a href="#SET-类型" class="headerlink" title="SET 类型"></a>SET 类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
+      <categories>
+          
+          <category> Redis源码阅读 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Redis </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>缓存二三事</title>
+      <link href="/2021/12/16/%E7%BC%93%E5%AD%98%E4%BA%8C%E4%B8%89%E4%BA%8B/"/>
+      <url>/2021/12/16/%E7%BC%93%E5%AD%98%E4%BA%8C%E4%B8%89%E4%BA%8B/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Redis源码:Hash表(三)</title>
       <link href="/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/"/>
       <url>/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/</url>
