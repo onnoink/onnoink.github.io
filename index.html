@@ -358,7 +358,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/20/Redis%E6%BA%90%E7%A0%81-RedisObject%E8%AF%A6%E8%A7%A3-%E5%9B%9B/">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/20/Redis%E6%BA%90%E7%A0%81-%E5%9B%9B-RedisObject%E8%AF%A6%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar_me.png">
@@ -372,7 +372,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/12/20/Redis%E6%BA%90%E7%A0%81-RedisObject%E8%AF%A6%E8%A7%A3-%E5%9B%9B/" class="post-title-link" itemprop="url">Redis源码:RedisObject详解(四)</a>
+            <a href="/2021/12/20/Redis%E6%BA%90%E7%A0%81-%E5%9B%9B-RedisObject%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Redis源码(四):RedisObject详解</a>
         </h2>
 
         <div class="post-meta">
@@ -381,10 +381,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2021-12-20 17:32:27 / Modified: 18:45:37" itemprop="dateCreated datePublished" datetime="2021-12-20T17:32:27+08:00">2021-12-20</time>
+              <time title="Created: 2021-12-20 17:32:27" itemprop="dateCreated datePublished" datetime="2021-12-20T17:32:27+08:00">2021-12-20</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-27 16:22:28" itemprop="dateModified" datetime="2021-12-27T16:22:28+08:00">2021-12-27</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -436,22 +442,22 @@
 <p>通过<code>type</code>属性，可以区分对应的<code>数据类型</code>，通过<code>encoding</code>属性可以区分<code>数据类型</code>的<code>底层结构</code></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_RAW 0     /* Raw representation */</span><br><span class="line">#define OBJ_ENCODING_INT 1     /* Encoded as integer */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br><span class="line">#define OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */</span><br><span class="line">#define OBJ_ENCODING_LINKEDLIST 4 /* No longer used: old list encoding. */</span><br><span class="line">#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */</span><br><span class="line">#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */</span><br><span class="line">#define OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */</span><br><span class="line">#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */</span><br><span class="line">#define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */</span><br><span class="line">#define OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */</span><br></pre></td></tr></table></figure>
 
-<h4 id="STRING-类型"><a href="#STRING-类型" class="headerlink" title="STRING 类型"></a>STRING 类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_RAW 0     /* Raw representation */</span><br><span class="line">#define OBJ_ENCODING_INT 1     /* Encoded as integer */</span><br><span class="line">#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string </span><br></pre></td></tr></table></figure>
-<h4 id="LIST-类型"><a href="#LIST-类型" class="headerlink" title="LIST 类型"></a>LIST 类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */</span><br></pre></td></tr></table></figure>
-<h4 id="HASH类型"><a href="#HASH类型" class="headerlink" title="HASH类型"></a>HASH类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br></pre></td></tr></table></figure>
-<h4 id="SET-类型"><a href="#SET-类型" class="headerlink" title="SET 类型"></a>SET 类型</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br></pre></td></tr></table></figure>
+<h4 id="STRING"><a href="#STRING" class="headerlink" title="STRING"></a>STRING</h4><p>字符串类型的<code>RedisObject</code>包含一下三种编码类型</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_RAW 0     /* Raw representation */</span><br><span class="line">#define OBJ_ENCODING_INT 1     /* Encoded as integer */</span><br><span class="line">#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string </span><br></pre></td></tr></table></figure>
+<p>默认接收到客户端传输的字符串的编码类型都是<code>OBJ_ENCODING_RAW</code>，过函数<code>tryObejctEncoding</code>后，会根据不同条件选择使用不同的编码类型</p>
+<blockquote>
+<p>共享对象是Redis用来节省内存占用和对象反复创建的一种手段，创建常用的对象为共享对象，例如<code>字符串对象&quot;OK&quot;</code>经常在服务端响应中用到，为了避免反复在内存中创建这个<code>字符串对象</code>， Redis把常用的对象创建为共享对象，需要的时候直接引用共享对象即可。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line">robj *tryObjectEncoding(robj *o) &#123;</span><br><span class="line">    long value;</span><br><span class="line">    sds s = o-&gt;ptr;</span><br><span class="line">    size_t len;</span><br><span class="line"></span><br><span class="line">    /* Make sure this is a string object, the only type we encode</span><br><span class="line">     * in this function. Other types use encoded memory efficient</span><br><span class="line">     * representations but are handled by the commands implementing</span><br><span class="line">     * the type. */</span><br><span class="line">    serverAssertWithInfo(NULL,o,o-&gt;type == OBJ_STRING);</span><br><span class="line"></span><br><span class="line">    /* We try some specialized encoding only for objects that are</span><br><span class="line">     * RAW or EMBSTR encoded, in other words objects that are still</span><br><span class="line">     * in represented by an actually array of chars. */</span><br><span class="line">    if (!sdsEncodedObject(o)) return o;</span><br><span class="line"></span><br><span class="line">    /* It&#x27;s not safe to encode shared objects: shared objects can be shared</span><br><span class="line">     * everywhere in the &quot;object space&quot; of Redis and may end in places where</span><br><span class="line">     * they are not handled. We handle them only as values in the keyspace. */</span><br><span class="line">     if (o-&gt;refcount &gt; 1) return o;</span><br><span class="line"></span><br><span class="line">    /* Check if we can represent this string as a long integer.</span><br><span class="line">     * Note that we are sure that a string larger than 20 chars is not</span><br><span class="line">     * representable as a 32 nor 64 bit integer. */</span><br><span class="line">    len = sdslen(s);</span><br><span class="line">    if (len &lt;= 20 &amp;&amp; string2l(s,len,&amp;value)) &#123;</span><br><span class="line">        /* This object is encodable as a long. Try to use a shared object.</span><br><span class="line">         * Note that we avoid using shared integers when maxmemory is used</span><br><span class="line">         * because every object needs to have a private LRU field for the LRU</span><br><span class="line">         * algorithm to work well. */</span><br><span class="line">        if ((server.maxmemory == 0 ||</span><br><span class="line">            !(server.maxmemory_policy &amp; MAXMEMORY_FLAG_NO_SHARED_INTEGERS)) &amp;&amp;</span><br><span class="line">            value &gt;= 0 &amp;&amp;</span><br><span class="line">            value &lt; OBJ_SHARED_INTEGERS)</span><br><span class="line">        &#123;</span><br><span class="line">            decrRefCount(o);</span><br><span class="line">            incrRefCount(shared.integers[value]);</span><br><span class="line">            return shared.integers[value];</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            if (o-&gt;encoding == OBJ_ENCODING_RAW) &#123;</span><br><span class="line">                sdsfree(o-&gt;ptr);</span><br><span class="line">                o-&gt;encoding = OBJ_ENCODING_INT;</span><br><span class="line">                o-&gt;ptr = (void*) value;</span><br><span class="line">                return o;</span><br><span class="line">            &#125; else if (o-&gt;encoding == OBJ_ENCODING_EMBSTR) &#123;</span><br><span class="line">                decrRefCount(o);</span><br><span class="line">                return createStringObjectFromLongLongForValue(value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /* If the string is small and is still RAW encoded,</span><br><span class="line">     * try the EMBSTR encoding which is more efficient.</span><br><span class="line">     * In this representation the object and the SDS string are allocated</span><br><span class="line">     * in the same chunk of memory to save space and cache misses. */</span><br><span class="line">    if (len &lt;= OBJ_ENCODING_EMBSTR_SIZE_LIMIT) &#123;</span><br><span class="line">        robj *emb;</span><br><span class="line"></span><br><span class="line">        if (o-&gt;encoding == OBJ_ENCODING_EMBSTR) return o;</span><br><span class="line">        emb = createEmbeddedStringObject(s,sdslen(s));</span><br><span class="line">        decrRefCount(o);</span><br><span class="line">        return emb;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /* We can&#x27;t encode the object...</span><br><span class="line">     *</span><br><span class="line">     * Do the last try, and at least optimize the SDS string inside</span><br><span class="line">     * the string object to require little space, in case there</span><br><span class="line">     * is more than 10% of free space at the end of the SDS string.</span><br><span class="line">     *</span><br><span class="line">     * We do that only for relatively large strings as this branch</span><br><span class="line">     * is only entered if the length of the string is greater than</span><br><span class="line">     * OBJ_ENCODING_EMBSTR_SIZE_LIMIT. */</span><br><span class="line">    trimStringObjectIfNeeded(o);</span><br><span class="line"></span><br><span class="line">    /* Return the original object. */</span><br><span class="line">    return o;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-
-
-
-
-
-
-
-
-
-
-
+<ol>
+<li>如果<code>RedisObject</code>的<code>引用计数 &gt; 1</code>，表明当前的<code>RedisObject</code>是一个<code>共享对象</code>，在多处被共享，共享对象的修改是不安全的，直接返回原始对象，也就是<code>OBJ_ENCODING_RAW</code>编码类型。</li>
+<li>如果长度<code>小于等于20</code>并且内容是一个<code>long类型</code>内存，如果<code>可以使用共享对象()</code>则可以使用<code>共享对象池</code>中对应的<code>OBJ_ENCODING_INT</code>编码的共享对象</li>
+</ol>
+<h4 id="LIST"><a href="#LIST" class="headerlink" title="LIST"></a>LIST</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */</span><br></pre></td></tr></table></figure>
+<h4 id="HASH"><a href="#HASH" class="headerlink" title="HASH"></a>HASH</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br></pre></td></tr></table></figure>
+<h4 id="SET"><a href="#SET" class="headerlink" title="SET"></a>SET</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */</span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br></pre></td></tr></table></figure>
+<h4 id="ZSET"><a href="#ZSET" class="headerlink" title="ZSET"></a>ZSET</h4>
       
     </div>
 
@@ -527,7 +533,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/13/Redis%E6%BA%90%E7%A0%81-%E4%B8%89-Hash%E8%A1%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar_me.png">
@@ -541,7 +547,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/" class="post-title-link" itemprop="url">Redis源码:Hash表(三)</a>
+            <a href="/2021/12/13/Redis%E6%BA%90%E7%A0%81-%E4%B8%89-Hash%E8%A1%A8/" class="post-title-link" itemprop="url">Redis源码(三):Hash表</a>
         </h2>
 
         <div class="post-meta">
@@ -558,7 +564,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-12-14 16:28:30" itemprop="dateModified" datetime="2021-12-14T16:28:30+08:00">2021-12-14</time>
+                <time title="Modified: 2021-12-27 16:21:49" itemprop="dateModified" datetime="2021-12-27T16:21:49+08:00">2021-12-27</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -586,7 +592,7 @@
 </blockquote>
 <p>上节课学习了Redis<code>简单动态字符串SDS</code>，我们提到Redis数据库键值对的键都是SDS类型，这个键值对结构就是今天要学的hash表数据结构。</p>
 <h3 id="哈希表-HashTable"><a href="#哈希表-HashTable" class="headerlink" title="哈希表 HashTable"></a>哈希表 HashTable</h3><p><code>哈希表(HashTable)</code>一般是一个数组结构，数组中每个元素是一个<code>哈希桶(bucket)</code>,要存入<code>哈希表</code>的数据通过<code>hash算法</code>得到一个<code>整数哈希值(HashCode)</code>,然后对<code>数组元素个数</code>进行<code>取模</code>运算得到元素在<code>哈希表</code>中的位置，也就是所对应的<code>哈希桶(bucket)</code>的位置,存入元素。</p>
-<p><img src="/2021/12/13/Redis%E6%BA%90%E7%A0%81-Hash%E8%A1%A8-%E4%B8%89/08ac157a8fbf4d22f8a5217bfea79a2f.jpeg" alt="hashtable"></p>
+<p><img src="/2021/12/13/Redis%E6%BA%90%E7%A0%81-%E4%B8%89-Hash%E8%A1%A8/08ac157a8fbf4d22f8a5217bfea79a2f.jpeg" alt="hashtable"></p>
 <h4 id="哈希表的优势"><a href="#哈希表的优势" class="headerlink" title="哈希表的优势"></a>哈希表的优势</h4><p>哈希表基于数组结构，数组结构有一个优势是随机读取指定索引位置的时间复杂度是O(1),所以基于在数组中随机读取指定位置的元素的时间复杂度是O(1)，所以键值对查找是哈希表的优势。</p>
 <h4 id="哈希函数"><a href="#哈希函数" class="headerlink" title="哈希函数"></a>哈希函数</h4><p><code>哈希函数</code>对要存入哈希表的元素的<code>key</code>进行<code>hash计算</code>后，生成对应的<code>hashcode</code>,从哈希表的结构我们看出，如果不同元素得到的<code>hashcode</code>比较<code>分散</code>，这样元素就能分散的插入到不同的<code>bucket</code>内，但是如果哈希函数的产生的<code>hashcode</code>比较集中，就会导致元素堆积在<code>部分bucket</code>范围内，造成<code>hash表</code>元素分布不均匀，产生<code>哈希冲突</code>的可能性大大增加。</p>
 <h4 id="哈希冲突"><a href="#哈希冲突" class="headerlink" title="哈希冲突"></a>哈希冲突</h4><p>因为哈希表是把<code>无限的元素映射到有限的空间内</code>，所以必然会出现多个元素映射到同一个位置的情况，就是<code>hash冲突</code>,也就是不同的元素通过<code>hash函数</code>得到的<code>hash值</code>经过取模运算后，最终可能指向同一个<code>bucket</code>。</p>
@@ -679,6 +685,13 @@
 
               <time title="Created: 2021-12-10 11:17:59" itemprop="dateCreated datePublished" datetime="2021-12-10T11:17:59+08:00">2021-12-10</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-27 16:19:02" itemprop="dateModified" datetime="2021-12-27T16:19:02+08:00">2021-12-27</time>
+              </span>
 
           
 
@@ -691,7 +704,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          
+          <blockquote>
+<p>Target: 了解基于Linux的文件系统的底层逻辑和原理，常说的强制sync和异步sync的方式</p>
+</blockquote>
+
       
     </div>
 
@@ -710,7 +726,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/07/Redis%E6%BA%90%E7%A0%81-%E5%AD%97%E7%AC%A6%E4%B8%B2SDS-%E4%BA%8C/">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/07/Redis%E6%BA%90%E7%A0%81-%E4%BA%8C-%E5%AD%97%E7%AC%A6%E4%B8%B2SDS/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar_me.png">
@@ -724,7 +740,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/12/07/Redis%E6%BA%90%E7%A0%81-%E5%AD%97%E7%AC%A6%E4%B8%B2SDS-%E4%BA%8C/" class="post-title-link" itemprop="url">Redis源码:字符串SDS(二)</a>
+            <a href="/2021/12/07/Redis%E6%BA%90%E7%A0%81-%E4%BA%8C-%E5%AD%97%E7%AC%A6%E4%B8%B2SDS/" class="post-title-link" itemprop="url">Redis源码(二):字符串SDS</a>
         </h2>
 
         <div class="post-meta">
@@ -741,7 +757,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-12-09 14:15:19" itemprop="dateModified" datetime="2021-12-09T14:15:19+08:00">2021-12-09</time>
+                <time title="Modified: 2021-12-27 16:21:22" itemprop="dateModified" datetime="2021-12-27T16:21:22+08:00">2021-12-27</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -907,7 +923,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/06/Redis%E6%BA%90%E7%A0%81-Redis%E6%BA%90%E7%A0%81%E7%9A%84%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84(%E4%B8%80)/">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/06/Redis%E6%BA%90%E7%A0%81-%E4%B8%80-Redis%E6%BA%90%E7%A0%81%E7%9A%84%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar_me.png">
@@ -921,7 +937,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/12/06/Redis%E6%BA%90%E7%A0%81-Redis%E6%BA%90%E7%A0%81%E7%9A%84%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84(%E4%B8%80)/" class="post-title-link" itemprop="url">Redis源码:Redis源码的整体结构(一)</a>
+            <a href="/2021/12/06/Redis%E6%BA%90%E7%A0%81-%E4%B8%80-Redis%E6%BA%90%E7%A0%81%E7%9A%84%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84/" class="post-title-link" itemprop="url">Redis源码(一):Redis源码的整体结构</a>
         </h2>
 
         <div class="post-meta">
@@ -930,10 +946,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2021-12-06 10:39:01 / Modified: 16:00:58" itemprop="dateCreated datePublished" datetime="2021-12-06T10:39:01+08:00">2021-12-06</time>
+              <time title="Created: 2021-12-06 10:39:01" itemprop="dateCreated datePublished" datetime="2021-12-06T10:39:01+08:00">2021-12-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-27 16:20:29" itemprop="dateModified" datetime="2021-12-27T16:20:29+08:00">2021-12-27</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -983,7 +1005,7 @@
 <li>Redis所有功能模块的代码</li>
 <li><code>modules</code>目录包含目录模块代码</li>
 </ul>
-<h3 id="utils"><a href="#utils" class="headerlink" title="utils"></a>utils</h3><p>辅助功能目录，<br><img src="/2021/12/06/Redis%E6%BA%90%E7%A0%81-Redis%E6%BA%90%E7%A0%81%E7%9A%84%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84(%E4%B8%80)/1201638760793_.pic.jpg" alt="辅助功能代码"></p>
+<h3 id="utils"><a href="#utils" class="headerlink" title="utils"></a>utils</h3><p>辅助功能目录，<br><img src="/2021/12/06/Redis%E6%BA%90%E7%A0%81-%E4%B8%80-Redis%E6%BA%90%E7%A0%81%E7%9A%84%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84/1201638760793_.pic.jpg" alt="辅助功能代码"></p>
 <h2 id="模块划分"><a href="#模块划分" class="headerlink" title="模块划分"></a>模块划分</h2><p>按照<code>服务器实例</code>,<code>数据库数据类型和操作</code>,<code>可靠性和可扩展性</code>,<code>辅助功能</code>四个唯独划分模块。</p>
 <h3 id="服务器实例"><a href="#服务器实例" class="headerlink" title="服务器实例"></a>服务器实例</h3><ul>
 <li><p>服务端程序的入口<code>main函数</code>所在的<code>server.h/server.c</code></p>
