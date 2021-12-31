@@ -187,6 +187,269 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/06/Redis%E5%AE%9E%E6%88%98-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_me.png">
+      <meta itemprop="name" content="onno">
+      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="onno">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/12/06/Redis%E5%AE%9E%E6%88%98-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">Redis实战-分布式锁的原理和实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-12-06 16:46:39" itemprop="dateCreated datePublished" datetime="2021-12-06T16:46:39+08:00">2021-12-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-07 13:28:11" itemprop="dateModified" datetime="2021-12-07T13:28:11+08:00">2021-12-07</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在日常工作中是经常会使用Redis锁，而我对Redis锁的认知也是不断变化的</p>
+<h2 id="方案一"><a href="#方案一" class="headerlink" title="方案一"></a>方案一</h2><p>基于Redis副本集群甚至是单实例的Redis，使用的简单的锁如下(此时的Key还是以业务事件命名的字符串)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">func lock(key string,ttl int) bool &#123;</span><br><span class="line">    restul = redis.ExecuteCommand(&quot;SETNX key 1&quot;)</span><br><span class="line">    if result &#123;</span><br><span class="line">        redis.ExecuteCommand(&quot;EXPIRE key ttl&quot;)    </span><br><span class="line">    &#125;</span><br><span class="line">    return result</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func unlock(key string) &#123;</span><br><span class="line">    redis.ExecuteCommand(&quot;DEL key&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>显而易见的是，这个锁存在很多问题，</p>
+<ul>
+<li>加锁操作不是原子操作，lock函数设置key和设置过期时间之间可能会中断</li>
+<li>不支持锁重入，即便是当前任务进程上锁后，也无法再次进行上锁。</li>
+<li>锁超时没有解决，在锁超时的特定情况下，导致可能会释放其它进程的锁</li>
+</ul>
+<h3 id="方案二"><a href="#方案二" class="headerlink" title="方案二"></a>方案二</h3><p>使用生成的唯一ID作为clientID</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">func lock(key string,ttl int) bool &#123;</span><br><span class="line">    result = redis.set(key,nx,client,ex,ttl) </span><br><span class="line">    return result</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">func unlock(key string) &#123;</span><br><span class="line">    redis.del(key,client)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/06/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB-%E4%B8%80-Redis%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84%E6%A6%82%E8%A7%88/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_me.png">
+      <meta itemprop="name" content="onno">
+      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="onno">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/12/06/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB-%E4%B8%80-Redis%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84%E6%A6%82%E8%A7%88/" class="post-title-link" itemprop="url">Redis源码阅读(一)：Redis源码结构概览</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-12-06 10:39:01" itemprop="dateCreated datePublished" datetime="2021-12-06T10:39:01+08:00">2021-12-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-31 11:07:10" itemprop="dateModified" datetime="2021-12-31T11:07:10+08:00">2021-12-31</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%B3%BB%E5%88%97%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">Redis源码阅读系列文章</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>博客是《极客时间》上《Redis源码剖析与实战》课程的学习笔记，同时也基于评论和Redis实际源码补充了一些个人的观点。代码基于Redis 5.0.13</p>
+</blockquote>
+<p>源码的阅读不要拘泥于细节，首先要对阅读项目有一个全面性的认识，有了全面性的认识之后，才能在具体阅读细节的时候承上启下，发觉更多隐藏的细节。</p>
+<p>想要熟悉一个项目可以从两个方面入手，</p>
+<ul>
+<li>项目目录结构的组织</li>
+<li>项目模块的划分</li>
+</ul>
+<h2 id="项目目录"><a href="#项目目录" class="headerlink" title="项目目录"></a>项目目录</h2><p>Redis 目录一共包含4个 <code>src</code>,<code>deps</code>,<code>tests</code>,<code>utils</code></p>
+<h3 id="deps-目录"><a href="#deps-目录" class="headerlink" title="deps 目录"></a>deps 目录</h3><p><code>deps</code>目录是redis依赖的第三方库的目录，包含</p>
+<ul>
+<li><code>C语言</code>的客户端<code>hiredis</code></li>
+<li><code>jemalloc</code>的内存分配器代码</li>
+<li><code>linenoise</code>用来替代<code>readline</code></li>
+<li><code>lua</code>相关代码</li>
+</ul>
+<h3 id="tests-目录"><a href="#tests-目录" class="headerlink" title="tests 目录"></a>tests 目录</h3><p>tests是Redis用来写测试函数的目录，主要包含</p>
+<ul>
+<li><code>unit</code>单元测试测试代码</li>
+<li><code>cluster</code>集群功能测试代码</li>
+<li><code>sentinel</code>哨兵功能测试代码</li>
+<li><code>interation</code> 主从复制功能代码(话说为什么不是replica)<br>除了上面这些测试代码外，还有一些测试辅助工具<code>assets</code>,<code>helpers</code>,<code>modules</code>,<code>support</code></li>
+</ul>
+<h3 id="src目录"><a href="#src目录" class="headerlink" title="src目录"></a>src目录</h3><ul>
+<li>Redis所有功能模块的代码</li>
+<li><code>modules</code>目录包含目录模块代码</li>
+</ul>
+<h3 id="utils"><a href="#utils" class="headerlink" title="utils"></a>utils</h3><p>辅助功能目录，<br><img src="/2021/12/06/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB-%E4%B8%80-Redis%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84%E6%A6%82%E8%A7%88/1201638760793_.pic.jpg" alt="辅助功能代码"></p>
+<h2 id="模块划分"><a href="#模块划分" class="headerlink" title="模块划分"></a>模块划分</h2><p>按照<code>服务器实例</code>,<code>数据库数据类型和操作</code>,<code>可靠性和可扩展性</code>,<code>辅助功能</code>四个唯独划分模块。</p>
+<h3 id="服务器实例"><a href="#服务器实例" class="headerlink" title="服务器实例"></a>服务器实例</h3><ul>
+<li><p>服务端程序的入口<code>main函数</code>所在的<code>server.h/server.c</code></p>
+</li>
+<li><p>服务端是一个网络程序，所以基于事件的网络驱动框架<code>ae.h/ae.c</code>,<code>ae_epoll.c</code>,<code>ae_evport.c</code>,<code>ae_kqueue.c</code>,<code>ae_select.c</code></p>
+</li>
+<li><p>底层<code>tcp</code>网络通信<code>anet.h/anet.c</code></p>
+</li>
+<li><p><code>客户端</code>实现<code>networking.c</code></p>
+</li>
+</ul>
+<h3 id="数据库数据类型和操作"><a href="#数据库数据类型和操作" class="headerlink" title="数据库数据类型和操作"></a>数据库数据类型和操作</h3><h4 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h4><table>
+<thead>
+<tr>
+<th>底层结构</th>
+<th>对应数据类型</th>
+<th>对应源文件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SDS</td>
+<td>String</td>
+<td>sds.h/sds.c/sdsalloc.h</td>
+</tr>
+<tr>
+<td>双向链表</td>
+<td>List</td>
+<td>adlist.h/adlist.c</td>
+</tr>
+<tr>
+<td>压缩列表</td>
+<td>List、Hash、Sorted Set</td>
+<td>ziplist.h/ziplist.c</td>
+</tr>
+<tr>
+<td>QuickList</td>
+<td>List、Hash、Sorted Set</td>
+<td>quicklist.h/quicklist.c</td>
+</tr>
+<tr>
+<td>整数列表</td>
+<td>Set</td>
+<td>intset.h/intset.c</td>
+</tr>
+<tr>
+<td>zipmap</td>
+<td>Hash</td>
+<td>zipmap.h/zipmap.c</td>
+</tr>
+<tr>
+<td>哈希表</td>
+<td>Hash,Sorted</td>
+<td>dict.h/dict.c</td>
+</tr>
+<tr>
+<td>HyperLoglog</td>
+<td>HyperLogLog</td>
+<td>hyperloglog.c</td>
+</tr>
+<tr>
+<td>GetHash</td>
+<td>Get</td>
+<td>geo.h/get.c gethash.h/gethash.c geohash_helper.h/geohash_helper.c</td>
+</tr>
+<tr>
+<td>位图</td>
+<td>位图</td>
+<td>bitops.c</td>
+</tr>
+<tr>
+<td>Stream</td>
+<td>时序数据</td>
+<td>stream.h/stream.c</td>
+</tr>
+</tbody></table>
+<h4 id="数据操作"><a href="#数据操作" class="headerlink" title="数据操作"></a>数据操作</h4><ul>
+<li>对数据库键值对的操作<code>db.c</code></li>
+<li>内存分配，封装<code>tcmalloc</code>和<code>jemalloc</code>到<code>zmalloc.h/zmalloc.c</code></li>
+<li>内存回收，过期key和过期策略<code>expire.c</code>，异步删除<code>lazyfree.c</code></li>
+<li>数据替换的<code>LRU</code>和<code>LFU</code>算法<code>evict.c</code></li>
+</ul>
+<h3 id="高可用和高可扩展"><a href="#高可用和高可扩展" class="headerlink" title="高可用和高可扩展"></a>高可用和高可扩展</h3><h4 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h4><p><code>内存快照rdb</code>和<code>aof</code>的实现<code>rdb.h/rdb.c</code>和<code>aof.c</code>以及对应文件的完整性检测<code>redis-check-rdb.c</code>和<code>redis-check-aof.c</code></p>
+<h4 id="主从复制功能实现"><a href="#主从复制功能实现" class="headerlink" title="主从复制功能实现"></a>主从复制功能实现</h4><p><code>主从复制</code>在<code>replication.c</code>中，所依赖的哨兵在<code>sentinel.c</code>中，<code>集群</code>在<code>cluster.h/cluster.c</code>中。</p>
+<h3 id="辅助功能"><a href="#辅助功能" class="headerlink" title="辅助功能"></a>辅助功能</h3><p>运维分析不同操作延迟来源的<code>latency.h/latency.c</code>文件，慢日志<code>slowlog.h/slowlog.c</code>,性能测试<code>redis-benchmark.c</code></p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>熟悉项目的目录结构可以帮助更好的阅读源码，一个中大型项目一般包含上千个源码文件，符合规范的项目会按照功能的不同把源码放在不同的文件目录中，通过了解项目的目录组织结构，可以对项目有一个大概的认知，如果同时提前对项目的模块和功能点有一定的了解更能事半功倍。</p>
+<p>课程中关于数据结构和对应的数据类型可能有缺失，这里使用下面的留言记录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">数据类型：</span><br><span class="line">- String（t_string.c、sds.c、bitops.c）</span><br><span class="line">- List（t_list.c、ziplist.c）</span><br><span class="line">- Hash（t_hash.c、ziplist.c、dict.c）</span><br><span class="line">- Set（t_set.c、intset.c）</span><br><span class="line">- Sorted Set（t_zset.c、ziplist.c、dict.c）</span><br><span class="line">- HyperLogLog（hyperloglog.c）</span><br><span class="line">- Geo（geo.c、geohash.c、geohash_helper.c）</span><br><span class="line">- Stream（t_stream.c、rax.c、listpack.c）</span><br><span class="line"></span><br><span class="line">全局：</span><br><span class="line">- Server（server.c、anet.c）</span><br><span class="line">- Object（object.c）</span><br><span class="line">- 键值对（db.c）</span><br><span class="line">- 事件驱动（ae.c、ae_epoll.c、ae_kqueue.c、ae_evport.c、ae_select.c、networking.c）</span><br><span class="line">- 内存回收（expire.c、lazyfree.c）</span><br><span class="line">- 数据替换（evict.c）</span><br><span class="line">- 后台线程（bio.c）</span><br><span class="line">- 事务（multi.c）</span><br><span class="line">- PubSub（pubsub.c）</span><br><span class="line">- 内存分配（zmalloc.c）</span><br><span class="line">- 双向链表（adlist.c）</span><br><span class="line"></span><br><span class="line">高可用&amp;集群：</span><br><span class="line">- 持久化：RDB（rdb.c、redis-check-rdb.c)、AOF（aof.c、redis-check-aof.c）</span><br><span class="line">- 主从复制（replication.c）</span><br><span class="line">- 哨兵（sentinel.c）</span><br><span class="line">- 集群（cluster.c）</span><br><span class="line"></span><br><span class="line">辅助功能：</span><br><span class="line">- 延迟统计（latency.c）</span><br><span class="line">- 慢日志（slowlog.c）</span><br><span class="line">- 通知（notify.c）</span><br><span class="line">- 基准性能（redis-benchmark.c）</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
     <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/12/02/Go%E8%AF%AD%E8%A8%80%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -751,188 +1014,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/28/Redis%E4%B8%ADSortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar_me.png">
-      <meta itemprop="name" content="onno">
-      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="onno">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/28/Redis%E4%B8%ADSortedSet%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84%E5%89%96%E6%9E%90/" class="post-title-link" itemprop="url">Redis-SortedSet底层结构剖析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-28 15:42:47" itemprop="dateCreated datePublished" datetime="2021-09-28T15:42:47+08:00">2021-09-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-12-02 16:36:36" itemprop="dateModified" datetime="2021-12-02T16:36:36+08:00">2021-12-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">Redis底层结构</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="悲催时刻"><a href="#悲催时刻" class="headerlink" title="悲催时刻"></a>悲催时刻</h1><p>又又又去面试了，面试官问了一个有序集合底层的数据结构是什么？我想可能很多没有细致了解Redis源码的同学听的最多的就是<code>跳表</code>这个数据结构了，所以我脱口而出跳表，然后面试官很坏，他问了一个给我说一下<code>ZSCORE</code>的时间复杂度，我就在心里默默的计算，岂不是<code>O(n)</code>吗？然后面试官笑笑不说话，结果可相知，我又又又挂了。</p>
-<h1 id="亡羊补牢"><a href="#亡羊补牢" class="headerlink" title="亡羊补牢"></a>亡羊补牢</h1><p>然后我当然又去恶补了一下Redis一些基础知识，此时才知道当时的自己多么的浅薄。这次主要说Redis的Sorted Set数据类型，其他的等我下次面试再挂了再来跟大家说吧。</p>
-<h2 id="Redis的基础结构"><a href="#Redis的基础结构" class="headerlink" title="Redis的基础结构"></a>Redis的基础结构</h2><p>Redis是一个键值对数据库，所以Redis数据库底层存储键值对的结构是哈希表，Redis中有一个<code>struct</code>类型是<code>dicht</code>就是一个对hash表的封装，Redis使用一个MurMurHash(我不知道你们怎么记忆，我记忆的方式特恶心，muamuahash亲亲hash)来寻找每个key在哈希表中的位置，然后用链表法解决哈希冲突(顺便说一下，链表法每次都是把新的元素放在开头的位置)。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dictht &#123;</span><br><span class="line">    // table是一个数组的二级指针，就是每个哈希表结构必备的数组结构</span><br><span class="line">    dictEntry **table;</span><br><span class="line">    // size 是上面那个数组的长度</span><br><span class="line">    unsigned long size;</span><br><span class="line">    // 这个用来算根据hash函数生成的数组在数组索引位置的掩码</span><br><span class="line">    unsigned long sizemask;</span><br><span class="line">    // 这个表用了多少</span><br><span class="line">    unsigned long used;</span><br><span class="line">&#125; dictht;</span><br></pre></td></tr></table></figure>
-<p>但是实际Redis中不直接使用dictht这个结构，而是使用了进一步封装的<code>dict</code>这个结构体，用来进行渐进式reshah的操作。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dict &#123;</span><br><span class="line">    // 类型，定义了不同类型的不同的一堆构造函数之类的方法，用来对不同的type的hash的value进行操作</span><br><span class="line">    dictType *type;</span><br><span class="line">    // 传给上面方法的参数</span><br><span class="line">    void *privdata;</span><br><span class="line">    // 刚才说的结构体，注意有俩ht[0] 和ht[1]</span><br><span class="line">    dictht ht[2];</span><br><span class="line">    // 进行rehash的时候索引</span><br><span class="line">    long rehashidx; /* rehashing not in progress if rehashidx == -1 */</span><br><span class="line">    // 正在安全运行的迭代器的数量? 这个还在看</span><br><span class="line">    unsigned long iterators; /* number of iterators currently running */</span><br><span class="line">&#125; dict;</span><br></pre></td></tr></table></figure>
-<p>上面的ht是一个数组，包含两个哈希表，也就是上面的<code>dicht</code>结构，数组内的元素都是<code>dictEntry</code>,<code>dictEntry</code>包含了<code>key</code>和<code>v</code>两个关键属性，一般情况下他们都是<code>RedisObject</code>结构体，<code>RedisObject</code>用来表示全部的5种数据结构，通过<code>type</code>来进行区分，同时我们知道我们熟知的5个redis数据结构很多都有两个实现的底层数据结构，通过<code>encoding</code>字段来区分。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">typedef struct redisObject &#123;</span><br><span class="line">    // 类型 4 位置 在3.0的版本里，包含REDIS_STRING REDIS_LIST REDIS_HASH REDIS_SET REDIS_ZSET</span><br><span class="line">    unsigned type:4;</span><br><span class="line">    // 编码方式 在Redis里，一种类型可能包含多个编码方式，例如Set就是HASH表或者是上面的dict 通过这个encoding来识别不同的编码方式</span><br><span class="line">    unsigned encoding:4;</span><br><span class="line">    // LRU算法的</span><br><span class="line">    unsigned lru:LRU_BITS; </span><br><span class="line">    // 引用计数</span><br><span class="line">    int refcount;</span><br><span class="line">    // 指向实际的底层结构</span><br><span class="line">    void *ptr;</span><br><span class="line">&#125; robj;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">typedef struct dictEntry &#123;</span><br><span class="line">    void *key;</span><br><span class="line">    union &#123;</span><br><span class="line">        void *val;</span><br><span class="line">        uint64_t u64;</span><br><span class="line">        int64_t s64;</span><br><span class="line">        double d;</span><br><span class="line">    &#125; v;</span><br><span class="line">    struct dictEntry *next;    </span><br><span class="line">    void *metadata[];          </span><br><span class="line">&#125; dictEntry;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-<h2 id="Sorted-Set的结构"><a href="#Sorted-Set的结构" class="headerlink" title="Sorted Set的结构"></a>Sorted Set的结构</h2><p>说了那么多,和题目也没啥关系啊？其实不是的，在<code>RedisObject</code>中，如果<code>zset</code>的<code>encoding</code>字段表示<code>zset</code>的编码形式是跳表的结构的话，其实对应的redisObject的ptr指向的数据结构是下面这个</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">typedef struct zset &#123;</span><br><span class="line">    dict *dict;</span><br><span class="line">    zskiplist *zsl;</span><br><span class="line">&#125; zset;</span><br></pre></td></tr></table></figure>
-
-<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>是一个哈希表和一个跳表，所以执行<code>zscore</code>的时候不用遍历跳表的<code>level0</code>的全部元素，直接使用hash表进行定位就可以,时间复杂度是<code>O(1)</code></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="https://onno.ink/2021/09/27/Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar_me.png">
-      <meta itemprop="name" content="onno">
-      <meta itemprop="description" content="onno 求索笔记 ，路漫漫其修远兮，吾将上下而求索">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="onno">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/27/Int%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8F%96%E5%80%BC%E8%8C%83%E5%9B%B4/" class="post-title-link" itemprop="url">Mysql Int类型的取值范围</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-27 18:08:21" itemprop="dateCreated datePublished" datetime="2021-09-27T18:08:21+08:00">2021-09-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-12-02 16:35:35" itemprop="dateModified" datetime="2021-12-02T16:35:35+08:00">2021-12-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">计算机组成原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="悲催时刻"><a href="#悲催时刻" class="headerlink" title="悲催时刻"></a>悲催时刻</h1><p>面试的时候，被问到 MySQL Int 类型的取值范围，一开始寻思问的不会是宽度的设置吧，最后真的竟然是问取值范围，MySQL的Int是32位的，那32位的Int类型的取值范围是多少呢？一时间我竟然有些恍惚，每次看到int8的取值范围我们的肌肉记忆就会告诉我们是<code>[-128,127]</code>，但是为啥是这个取值范围呢？我掐指一算，不应该是<code>[-127,127](注意，这个是错误的！！！)</code>吗？<br>第一位是符号位置，所以<code>[0111,1111]</code>是<code>127</code>，<code>[1111,1111]</code>是<code>-127</code>岂不是爽歪歪？结果正确的答案是<code>[-128,127]</code>，我就不知道你怎么给老子存<code>-128</code></p>
-<p>结果可想而知，我又挂了</p>
-<h1 id="亡羊补牢"><a href="#亡羊补牢" class="headerlink" title="亡羊补牢"></a>亡羊补牢</h1><p>为了熟练掌握这个基础知识，我又又又一次开始Google，终于有一定的理解，计算机里带符号类型的整数都是使用一种称为<code>补码</code>的方式存储的，为啥呢？因为CPU内部的哪些乱七八糟的门电路什么的，费老大劲才能组成一个<code>全加器</code>用来对两个数进行加法运算，结果你给老子来个减法？所以为了减少复杂数字电路的设计，复用<code>全加器</code>，出现了<code>原码</code>、<code>反码</code>和<code>补码</code>的概念，要有一个概念就是符号整数在内存里都是补码存储的，便于运算.</p>
-<h2 id="原码、反码和补码"><a href="#原码、反码和补码" class="headerlink" title="原码、反码和补码"></a>原码、反码和补码</h2><p><code>原码</code> 就是我们学习和理解的符号整形的二进制表示方式，例如<code>-3</code>用<code>[1000,0011]</code>表示，<code>+3</code>用<code>[0000,0011]</code>表示</p>
-<p><code>反码</code> 正数的反码和原码一样，负数的反码是<code>符号为不变,其余位取反</code>，所以 <code>+3</code> 的反码还是<code>[0000,0011]</code>，<code>-3</code>的反码是[1111,1100],</p>
-<p><code>补码</code> 正数的补码和原码一样，负数的补码是<code>符号为不变,其余位取反后+1</code>，所以 <code>+3</code> 的补码还是<code>[0000,0011]</code>，<code>-3</code>的补码是[1111,1101]</p>
-<h2 id="CPU-符号整数的加减法的计算"><a href="#CPU-符号整数的加减法的计算" class="headerlink" title="CPU 符号整数的加减法的计算"></a>CPU 符号整数的加减法的计算</h2><p>上面我们说过，为了复用<code>加法器</code>，我们需要把<code>减法</code>干掉，恰好我们有一个定理是<code>1-1 = 1+(-1)</code>，哈哈哈，怎么样，这不就把减法<br>干掉了吗？我们来试试</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](原) + [1000,0011](原) = [1000,0110](原) = -6 </span><br></pre></td></tr></table></figure>
-<p>错的离谱，符号为参与运算，错的不能再错了，难道再设计个电路专门处理符号位？这也太蠢了，我们用新技能<code>反码</code>试试</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](反) + [1111,1100](反) =  [1111,1111](反) = [1000,0000](原) = -0 </span><br></pre></td></tr></table></figure>
-
-<p>bingo! 答对了，但是 [1000,0000] 是 <code>-0</code> 难道[0000,0000]是<code>+0</code>吗？<code>+0</code>和<code>-0</code>怕不是不相等吧，所以我们再用另一个新技能<code>补码试试</code></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 + (-3) = [0000,0011](补) + [1111,1101](补) = &#123;1&#125;[0000,0000](补) = [1000,0000](原) = 0 </span><br></pre></td></tr></table></figure>
-<p><code>补码</code>有点神奇啊，竟然溢出了一个位置，咋办，难不成把前面哪个数据的内存给偷摸的改了? 其实不是，加法器会丢弃溢出的位置，符号为的新值作为符号的判定，所以上面是[0000,0000] 是 0</p>
-<p>这个例子不好，我们换一个再试一次</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-127 - 1 = (-127) + (-1) = [1000,0001](补) + [1111,1111](补) = &#123;1&#125;[1000,0000](补) = [1000,0000](原) </span><br></pre></td></tr></table></figure>
-<p>点子不好，咋又溢出了，我们把它按照惯丢掉，变成了<code>[1000,0000]</code>，你大爷的，<code>-0</code>你怎么又来了，结果不应该是<code>-128</code>吗，所以大家一生气，让[1000,0000]就代表<code>-128</code>吧，所以在<code>补码</code>表示中[1000,0000]就代表了(-128),原先的<code>-0</code>没了，但是<code>+0</code>还在,所以Int(8)的取值范围就是[1000,0000] 到 [0111,1111] 也就是<code>[-128,127]</code></p>
-<p>上面的都是点子背，我们弄一个正常的来算一下</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">12 - 9 = [0000,1100](补) + [1111,0111](补) = &#123;1&#125;[0000,0011](补) = [0000,0011](原) = 3</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>也是正确的</p>
-<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>所以我们得到一个规律，一个符号整数的取值范围和他所占用的位数的n的关系为 <code>[-(2^(n-1)),2^(n-1)-1]</code>, MySQL Int 类型的位数是32位置，所以MySQL Int的取值范围是 <code>[-(2^(32-1)),2^(32-1)-1]</code> 是 <code>[-2 147 483 648,2 147 483 647]</code></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1004,14 +1085,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
