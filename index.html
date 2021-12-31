@@ -897,7 +897,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-12-31 15:08:57" itemprop="dateModified" datetime="2021-12-31T15:08:57+08:00">2021-12-31</time>
+                <time title="Modified: 2021-12-31 15:26:44" itemprop="dateModified" datetime="2021-12-31T15:26:44+08:00">2021-12-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -937,6 +937,7 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">struct __attribute__ ((__packed__)) sdshdr##T &#123;</span><br><span class="line">    uint##T_t len; /* used */</span><br><span class="line">    uint##T_t alloc; /* excluding the header and null terminator */</span><br><span class="line">    unsigned char flags; /* 3 lsb of type， 5 unused bits */</span><br><span class="line">    char buf[];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <p>上面结构体包含<code>当前字符串长度len(不包含\0)</code>，<code>当前sds字符串分配的长度(alloc)</code>，<code>当前字符串的类型flags</code>，<code>字符串数组</code></p>
 <p>同时Redis还给<code>char*</code>起了一个新的别名<code>sds</code>，同时创建了很多对sds进行操作的函数，Redis虽然创建了一个新的数据结构，但是创建sds返回的仍然是结构体里的buf字节数组，便于复用一些<code>C语言</code>的字符串操作。</p>
+<h4 id="二进制安全"><a href="#二进制安全" class="headerlink" title="二进制安全"></a>二进制安全</h4><p><code>sds</code>使用结构体内置的<code>alloc</code>和<code>len</code>字段读取字符串的实际长度，所以是二进制安全的。</p>
 <h4 id="节省内存"><a href="#节省内存" class="headerlink" title="节省内存"></a>节省内存</h4><p>为了达到节省内存的目的，Redis设计了针对不同字符串长度大小不同的<code>SDS</code>字符串的头信息结构<code>sdshdr5(不再使用)</code>，<code>sdshdr8</code>，<code>sdshdr16</code>，<code>sdshdr32</code>，<code>sdshdr64</code>。不同类型的<code>sds结构体</code>区别是记录字符串长度的无符号整型的<code>alloc</code>位数的不同，例如<code>sdshdr16</code>的<code>alloc</code>是一个<code>uint16</code>的无符号整数，所以能表达的最数字是<code>2^16 - 1</code>，所以<code>sdshdr16</code>能存储的最大的字符串的长度为<code>2^16 - 1</code>。这种设计避免了过短的字符串的头信息占用过多内存。</p>
 <blockquote>
 <p>经常有人问Redis最大能存多大，官方文档表达是最大是512M，但是<code>sdshdr64</code>明显能够表达更长，估计是考虑32位主机无法使用<code>sdshdr64</code>，所以使用<code>sdshdr32</code>的字符串最大长度<code>2^32-1</code></p>
@@ -954,8 +955,7 @@
 <li>最后，设置目标字符串的最新长度。</li>
 </ul>
 <p>省去了遍历字符串的操作，同时通过额外字段存储<code>len</code>和<code>alloc</code>，可以提前分配部分空间，<code>免去每次释放和分配内存</code>的复杂工作</p>
-<h5 id><a href="#" class="headerlink" title></a></h5><p>一个知识点，SDS的扩容的规则: 内存预先分配<br><code>sdsMakeRoomFor</code>方法决定了字符串的扩容规则，redis不单单为</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#define SDS_MAX_PREALLOC (1024*1024)</span><br><span class="line"></span><br><span class="line">if (newlen &lt; SDS_MAX_PREALLOC)</span><br><span class="line">    newlen *= 2;</span><br><span class="line">else</span><br><span class="line">    newlen += SDS_MAX_PREALLOC;</span><br></pre></td></tr></table></figure>
+<h5 id="SDS的扩容的规则"><a href="#SDS的扩容的规则" class="headerlink" title="SDS的扩容的规则"></a>SDS的扩容的规则</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#define SDS_MAX_PREALLOC (1024*1024)</span><br><span class="line"></span><br><span class="line">if (newlen &lt; SDS_MAX_PREALLOC)</span><br><span class="line">    newlen *= 2;</span><br><span class="line">else</span><br><span class="line">    newlen += SDS_MAX_PREALLOC;</span><br></pre></td></tr></table></figure>
 <ul>
 <li>如果新的字符串的<code>小于1M</code>，则扩容为新的字符串的<code>2倍大小</code></li>
 <li>如果新的字符串的<code>大于等于1M</code>，则扩容为新的字符串基础上<code>+1M</code></li>
